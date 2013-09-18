@@ -5,9 +5,12 @@
   <property file="build.properties"/>
 
   <target name="clean">
-    <delete dir="build"/>
-    <delete dir="libs"/>
-    <delete dir="obj"/>
+    <delete failonerror="false">
+      <fileset dir="jni" includes="**/*.c"/>
+      <fileset dir="build"/>
+      <fileset dir="libs"/>
+      <fileset dir="obj"/>
+    </delete>
   </target>
 
   <target name="compile">
