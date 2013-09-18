@@ -10,28 +10,28 @@
     </delete>
 
     <delete dir="build"/>
+    <delete dir="gen"/>
     <delete dir="lib"/>
     <delete dir="obj"/>
   </target>
 
-  <target name="compile">
+  <target name="compile" depends="swig">
     <mkdir dir="build/classes"/>
     <javac
       source="1.6"
       target="1.6"
-      srcdir="src"
+      srcdir="gen"
       destdir="build/classes"
       includeAntRuntime="false"/>
   </target>
 
   <target name="swig">
-
-    <mkdir dir="src/edu/cmu/pocketsphinx"/>
+    <mkdir dir="gen/edu/cmu/pocketsphinx"/>
 
     <exec executable="swig">
       <arg line="-I../sphinxbase/include -I../sphinxbase/swig"/>
       <arg line="-java -package edu.cmu.pocketsphinx"/>
-      <arg line="-outdir src/edu/cmu/pocketsphinx/ -o jni/sphinxbase_wrap.c"/>
+      <arg line="-outdir gen/edu/cmu/pocketsphinx/ -o jni/sphinxbase_wrap.c"/>
       <arg line="../sphinxbase/swig/sphinxbase.i"/>
     </exec>
 
@@ -39,16 +39,18 @@
       <arg line="-I../sphinxbase/swig"/>
       <arg line="-I../pocketsphinx/include -I../pocketsphinx/swig"/>
       <arg line="-java -package edu.cmu.pocketsphinx"/>
-      <arg line="-outdir src/edu/cmu/pocketsphinx/ -o jni/pocketsphinx_wrap.c"/>
+      <arg line="-outdir gen/edu/cmu/pocketsphinx/ -o jni/pocketsphinx_wrap.c"/>
       <arg line="../pocketsphinx/swig/pocketsphinx.i"/>
     </exec>
+  </target>
 
+  <target name="jni" depends="swig">
     <exec executable="${ndk.dir}/ndk-build">
       <env key="NDK_LIBS_OUT" value="lib"/>
     </exec>
   </target>
 
-  <target name="jar" depends="compile,swig">
+  <target name="jar" depends="compile,jni">
     <jar destfile="build/pocketsphinx-android.jar" basedir="build/classes">
       <fileset dir="." includes="lib/**"/>
     </jar>
