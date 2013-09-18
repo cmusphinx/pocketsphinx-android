@@ -5,12 +5,13 @@
   <property file="build.properties"/>
 
   <target name="clean">
-    <delete failonerror="false">
+    <delete>
       <fileset dir="jni" includes="**/*.c"/>
-      <fileset dir="build"/>
-      <fileset dir="libs"/>
-      <fileset dir="obj"/>
     </delete>
+
+    <delete dir="build"/>
+    <delete dir="lib"/>
+    <delete dir="obj"/>
   </target>
 
   <target name="compile">
@@ -42,12 +43,14 @@
       <arg line="../pocketsphinx/swig/pocketsphinx.i"/>
     </exec>
 
-    <exec executable="${ndk.dir}/ndk-build"/>
+    <exec executable="${ndk.dir}/ndk-build">
+      <env key="NDK_LIBS_OUT" value="lib"/>
+    </exec>
   </target>
 
   <target name="jar" depends="compile,swig">
     <jar destfile="build/pocketsphinx-android.jar" basedir="build/classes">
-      <fileset dir="libs"/>
+      <fileset dir="." includes="lib/**"/>
     </jar>
   </target>
 </project>
