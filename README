@@ -4,12 +4,13 @@ archive of pocketsphinx for Android.
 Make sure this directory is in the same parent directory as sphinxbase and
 pocketsphinx are. You can download them from http://cmusphinx.sourceforge.net/.
 
-Specify a valid path to Android NDK in 'build.properties'.
+Create 'build.properties' in the project root and Specify a valid path to
+Android NDK in 'ndk.dir'.
 
 Run `ant jar`. If everything goes right, you will get
-'pocketsphinx-android.jar' without 'build' directory. This should contain
-compiled wrapper classes as well as dynamically linked libraries with the
-pockesphinx code.
+'pocketsphinx-android-$version.jar' within 'build' directory. This should
+contain compiled wrapper classes as well as dynamically linked libraries with
+the pockesphinx code.
 
-Copy the built archive to `libs` directory of your Android project and the
+Copy the built archive to 'libs' directory of your Android project and the
 build script will automatically include it in the project binary.
