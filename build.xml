@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project default="jar">
+<project name="pocketsphinx-android" default="jar">
 
   <property file="build.properties"/>
   <property name="version" value="0.8"/>
