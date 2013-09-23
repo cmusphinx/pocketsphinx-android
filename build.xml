@@ -29,14 +29,14 @@
   <target name="swig">
     <mkdir dir="gen/edu/cmu/pocketsphinx"/>
 
-    <exec executable="swig">
+    <exec executable="swig" failonerror="true">
       <arg line="-I../sphinxbase/include -I../sphinxbase/swig"/>
       <arg line="-java -package edu.cmu.pocketsphinx"/>
       <arg line="-outdir gen/edu/cmu/pocketsphinx/ -o jni/sphinxbase_wrap.c"/>
       <arg line="../sphinxbase/swig/sphinxbase.i"/>
     </exec>
 
-    <exec executable="swig">
+    <exec executable="swig" failonerror="true">
       <arg line="-I../sphinxbase/swig"/>
       <arg line="-I../pocketsphinx/include -I../pocketsphinx/swig"/>
       <arg line="-java -package edu.cmu.pocketsphinx"/>
@@ -46,7 +46,7 @@
   </target>
 
   <target name="jni" depends="swig">
-    <exec executable="${ndk.dir}/ndk-build">
+    <exec executable="${ndk.dir}/ndk-build" failonerror="true">
       <env key="NDK_LIBS_OUT" value="lib"/>
     </exec>
   </target>
