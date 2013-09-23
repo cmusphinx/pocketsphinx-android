@@ -2,8 +2,10 @@
 
 <project name="pocketsphinx-android" default="jar">
 
-  <property file="build.properties"/>
   <property name="version" value="0.8"/>
+  <property name="build.name" value="${ant.project.name}-${version}"/>
+
+  <property file="build.properties"/>
 
   <target name="clean">
     <delete>
@@ -54,7 +56,15 @@
   <target name="jar" depends="compile,jni">
     <jar
       basedir="build/classes"
-      destfile="build/pocketsphinx-android-${version}.jar">
+      destfile="build/${build.name}-nolib.jar"/>
+
+    <copy
+      file="build/${build.name}-nolib.jar"
+      tofile="build/${build.name}.jar"/>
+
+    <jar
+      update="true"
+      destfile="build/${build.name}.jar">
       <fileset dir="." includes="lib/**"/>
     </jar>
   </target>

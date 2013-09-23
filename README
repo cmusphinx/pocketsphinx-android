@@ -1,3 +1,5 @@
+Building
+========
 You will need SWIG, Apache Ant and Android NDK to build a distributable
 archive of pocketsphinx for Android.
 
@@ -7,10 +9,18 @@ pocketsphinx are. You can download them from http://cmusphinx.sourceforge.net/.
 Create 'build.properties' in the project root and Specify a valid path to
 Android NDK in 'ndk.dir'.
 
-Run `ant jar`. If everything goes right, you will get
-'pocketsphinx-android-$version.jar' within 'build' directory. This should
-contain compiled wrapper classes as well as dynamically linked libraries with
-the pockesphinx code.
+Run `ant jar`. If everything is setup right, you will get two jar archieves -
+regular and "nolib" versions. The "nolib" version contains only compiled
+wrapper classes, while regular version also includes shared library.
 
-Copy the built archive to 'libs' directory of your Android project and the
-build script will automatically include it in the project binary.
+Using with Eclipse ADT plugin
+=============================
+Due to a bug in ADT plugin it is not possible to use regular version. This is
+why "nolib" version exists. Put it into 'libs' directory of your project. You
+will also need to copy shared library from 'lib/armeabi' to 'libs/armeabi'
+directory of your project.
+
+Using in Android Studio or from command-line
+============================================
+Simply put regular version of the jar library into 'libs' directory of your
+project.
