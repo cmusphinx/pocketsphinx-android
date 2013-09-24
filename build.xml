@@ -24,6 +24,7 @@
       source="1.6"
       target="1.6"
       srcdir="gen"
+      deprecation="true"
       destdir="build/classes"
       includeAntRuntime="false"/>
   </target>
