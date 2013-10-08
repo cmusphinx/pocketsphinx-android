@@ -6,8 +6,12 @@ archive of pocketsphinx for Android.
 Make sure this directory is in the same parent directory as sphinxbase and
 pocketsphinx are. You can download them from http://cmusphinx.sourceforge.net/.
 
-Create 'build.properties' in the project root and Specify a valid path to
-Android NDK in 'ndk.dir'.
+Create 'build.properties' in the project root and define the following
+properties:
+
+  * sdk.dir - path to Android SDK
+  * sdk.vsn - Android API version
+  * ndk.dir - path to Android NDK
 
 Run `ant jar`. If everything is setup right, you will get two jar archieves -
 regular and "nolib" versions. The "nolib" version contains only compiled

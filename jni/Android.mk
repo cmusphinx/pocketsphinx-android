@@ -9,7 +9,9 @@ SPHINX_PATH := ..
 BASE_PATH := $(call my-dir)
 
 include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(SPHINX_PATH)/sphinxbase/include/android $(SPHINX_PATH)/sphinxbase/include
+LOCAL_C_INCLUDES := \
+	$(SPHINX_PATH)/sphinxbase/include/android \
+	$(SPHINX_PATH)/sphinxbase/include
 LOCAL_CFLAGS += -DHAVE_CONFIG_H
 LOCAL_CFLAGS += -DANDROID_NDK
 
@@ -46,7 +48,9 @@ LOCAL_SRC_FILES := \
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(SPHINX_PATH)/sphinxbase/include/android $(SPHINX_PATH)/sphinxbase/include
+LOCAL_C_INCLUDES := \
+	$(SPHINX_PATH)/sphinxbase/include/android \
+	$(SPHINX_PATH)/sphinxbase/include
 LOCAL_CFLAGS += -DHAVE_CONFIG_H
 LOCAL_CFLAGS += -DANDROID_NDK
 
@@ -67,7 +71,9 @@ LOCAL_SRC_FILES := \
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(SPHINX_PATH)/sphinxbase/include/android $(SPHINX_PATH)/sphinxbase/include
+LOCAL_C_INCLUDES := \
+	$(SPHINX_PATH)/sphinxbase/include/android \
+	$(SPHINX_PATH)/sphinxbase/include
 LOCAL_CFLAGS += -DHAVE_CONFIG_H
 LOCAL_CFLAGS += -DANDROID_NDK
 
@@ -84,7 +90,9 @@ LOCAL_SRC_FILES := \
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(SPHINX_PATH)/sphinxbase/include/android $(SPHINX_PATH)/sphinxbase/include
+LOCAL_C_INCLUDES := \
+	$(SPHINX_PATH)/sphinxbase/include/android \
+	$(SPHINX_PATH)/sphinxbase/include
 LOCAL_CFLAGS += -DHAVE_CONFIG_H
 LOCAL_CFLAGS += -DANDROID_NDK
 
@@ -105,8 +113,10 @@ LOCAL_SRC_FILES := \
 include $(BUILD_STATIC_LIBRARY)
 
 include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(SPHINX_PATH)/sphinxbase/include/android $(SPHINX_PATH)/sphinxbase/include \
-					$(SPHINX_PATH)/pocketsphinx/include
+LOCAL_C_INCLUDES := \
+	$(SPHINX_PATH)/sphinxbase/include/android \
+	$(SPHINX_PATH)/sphinxbase/include \
+	$(SPHINX_PATH)/pocketsphinx/include
 LOCAL_CFLAGS += -DHAVE_CONFIG_H
 LOCAL_CFLAGS += -DANDROID_NDK
 
@@ -141,17 +151,42 @@ LOCAL_SRC_FILES := \
 
 include $(BUILD_STATIC_LIBRARY)
 
-# Create the dynamic library wrapper
 include $(CLEAR_VARS)
-LOCAL_C_INCLUDES := $(SPHINX_PATH)/sphinxbase/include/android $(SPHINX_PATH)/sphinxbase/include \
-					$(SPHINX_PATH)/pocketsphinx/include
+LOCAL_C_INCLUDES := \
+	$(SPHINX_PATH)/sphinxbase/include/android \
+	$(SPHINX_PATH)/sphinxbase/include \
+	$(SPHINX_PATH)/pocketsphinx/include
+LOCAL_CFLAGS += -DHAVE_CONFIG_H
+LOCAL_CFLAGS += -DANDROID_NDK
+LOCAL_CFLAGS += -DSWIG_NOINCLUDE
+
+LOCAL_PATH := $(BASE_PATH)
+LOCAL_MODULE := sphinxbase_wrap
+
+LOCAL_SRC_FILES := sphinxbase_wrap.c
+
+include $(BUILD_STATIC_LIBRARY)
+
+include $(CLEAR_VARS)
+LOCAL_C_INCLUDES := \
+	$(SPHINX_PATH)/sphinxbase/include/android \
+	$(SPHINX_PATH)/sphinxbase/include \
+	$(SPHINX_PATH)/pocketsphinx/include
 LOCAL_CFLAGS += -DHAVE_CONFIG_H
 LOCAL_CFLAGS += -DANDROID_NDK
 
 LOCAL_PATH := $(BASE_PATH)
-LOCAL_MODULE := pocketsphinx_jni
+LOCAL_MODULE := pocketsphinx_wrap
 
-LOCAL_SRC_FILES := sphinxbase_wrap.c pocketsphinx_wrap.c
+LOCAL_SRC_FILES := pocketsphinx_wrap.c
+
+include $(BUILD_STATIC_LIBRARY)
+
+# Create the dynamic library wrapper
+include $(CLEAR_VARS)
+
+LOCAL_PATH := $(BASE_PATH)
+LOCAL_MODULE := pocketsphinx_jni
 
 # See http://code.google.com/p/android/issues/detail?id=9439
 PRIVATE_WHOLE_STATIC_LIBRARIES := \
@@ -159,7 +194,16 @@ PRIVATE_WHOLE_STATIC_LIBRARIES := \
 	$(call static-library-path,sphinxfe) \
 	$(call static-library-path,sphinxfeat) \
 	$(call static-library-path,sphinxlm) \
-	$(call static-library-path,pocketsphinx)
-LOCAL_STATIC_LIBRARIES := pocketsphinx sphinxlm sphinxfeat sphinxfe sphinxutil
+	$(call static-library-path,pocketsphinx) \
+	$(call static-library-path,sphinxbase_wrap) \
+	$(call static-library-path,pocketsphinx_wrap)
+LOCAL_STATIC_LIBRARIES := \
+	pocketsphinx \
+  sphinxlm \
+  sphinxfeat \
+  sphinxfe \
+  sphinxutil \
+  sphinxbase_wrap \
+  pocketsphinx_wrap
 
 include $(BUILD_SHARED_LIBRARY)

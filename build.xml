@@ -23,10 +23,13 @@
     <javac
       source="1.6"
       target="1.6"
-      srcdir="gen"
       deprecation="true"
       destdir="build/classes"
-      includeAntRuntime="false"/>
+      includeAntRuntime="false"
+      classpath="${sdk.dir}/platforms/android-${sdk.vsn}/android.jar">
+      <src path="gen"/>
+      <src path="src"/>
+    </javac>
   </target>
 
   <target name="swig">
