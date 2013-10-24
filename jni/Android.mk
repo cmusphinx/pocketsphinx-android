@@ -188,22 +188,13 @@ include $(CLEAR_VARS)
 LOCAL_PATH := $(BASE_PATH)
 LOCAL_MODULE := pocketsphinx_jni
 
-# See http://code.google.com/p/android/issues/detail?id=9439
-PRIVATE_WHOLE_STATIC_LIBRARIES := \
-	$(call static-library-path,sphinxutil) \
-	$(call static-library-path,sphinxfe) \
-	$(call static-library-path,sphinxfeat) \
-	$(call static-library-path,sphinxlm) \
-	$(call static-library-path,pocketsphinx) \
-	$(call static-library-path,sphinxbase_wrap) \
-	$(call static-library-path,pocketsphinx_wrap)
 LOCAL_STATIC_LIBRARIES := \
 	pocketsphinx \
   sphinxlm \
   sphinxfeat \
   sphinxfe \
-  sphinxutil \
-  sphinxbase_wrap \
-  pocketsphinx_wrap
+  sphinxutil
+
+LOCAL_WHOLE_STATIC_LIBRARIES := sphinxbase_wrap pocketsphinx_wrap
 
 include $(BUILD_SHARED_LIBRARY)
