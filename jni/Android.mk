@@ -188,6 +188,8 @@ include $(CLEAR_VARS)
 LOCAL_PATH := $(BASE_PATH)
 LOCAL_MODULE := pocketsphinx_jni
 
+LOCAL_LDLIBS := -llog
+
 LOCAL_STATIC_LIBRARIES := \
   pocketsphinx \
   sphinxlm \
