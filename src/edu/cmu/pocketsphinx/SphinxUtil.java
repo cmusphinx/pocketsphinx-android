@@ -7,10 +7,10 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import android.content.Context;
-
 import android.content.res.AssetManager;
-
 import android.util.Log;
+
+import static android.os.Environment.getExternalStorageState;
 
 
 public class SphinxUtil {
@@ -20,7 +20,12 @@ public class SphinxUtil {
     public static File syncAssets(Context context, String path) 
         throws IOException
     {
-        File root = new File(context.getExternalFilesDir(null), path);
+        File dir = context.getExternalFilesDir(null);
+        if (null == dir)
+            throw new IOException("external storage state: " +
+                                  getExternalStorageState());
+
+        File root = new File(dir, path);
         copyAsset(context.getAssets(), path, root);
 
         return root;
@@ -39,10 +44,10 @@ public class SphinxUtil {
         } else {
             if (!dst.exists()) {
                 dst.getParentFile().mkdirs();
-                Log.d(TAG, "copy " + src + " to " + dst);
+                Log.i(TAG, "copy " + src + " to " + dst);
                 copyStream(assets.open(src), new FileOutputStream(dst));
             } else {
-                Log.d(TAG, "skip " + src + " - file exists");
+                Log.i(TAG, "skip " + src + " - file exists");
             }
         }
     }
