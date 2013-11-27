@@ -63,6 +63,11 @@
   </target>
 
   <target name="jar" depends="compile,jni">
+    <jar destfile="build/${build.name}-src.jar">
+      <fileset dir="gen" includes="**/*.java"/>
+      <fileset dir="src" includes="**/*.java"/>
+    </jar>
+
     <jar
       basedir="build/classes"
       destfile="build/${build.name}-nolib.jar"/>
