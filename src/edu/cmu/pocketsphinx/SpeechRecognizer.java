@@ -24,6 +24,7 @@ public class SpeechRecognizer {
     private static final int MSG_START = 1;
     private static final int MSG_NEXT = 2;
     private static final int MSG_STOP = 3;
+    private static final int MSG_SET_SEARCH = 4;
 
     private final AudioRecord recorder;
     private final Decoder decoder;
@@ -56,10 +57,6 @@ public class SpeechRecognizer {
         });
     }
 
-    public Decoder getDecoder() {
-        return decoder;
-    }
-
     public void addListener(RecognitionListener listener) {
         listeners.add(listener);
     }
@@ -75,6 +72,10 @@ public class SpeechRecognizer {
     public void stopListening() {
         sendMessage(MSG_STOP);
     }
+    
+    public void setSearch(String searchName) {
+        handler.sendMessage(handler.obtainMessage(MSG_SET_SEARCH, (Object)searchName));
+    }
 
     public boolean isActive() {
         int state = recorder.getRecordingState();
@@ -89,6 +90,9 @@ public class SpeechRecognizer {
         switch (msg.what) {
             default:
                 return false;
+            case MSG_SET_SEARCH:
+                decoder.setSearch((String)msg.obj);
+                break;
             case MSG_STOP:
                 if (isActive())
                     endUtterance();
@@ -136,6 +140,22 @@ public class SpeechRecognizer {
         final Hypothesis hypothesis = decoder.hyp();
         if (null != hypothesis)
             mainLoopHandler.post(new ResultCallback(hypothesis));
+    }
+    
+    public void setFsg(String name, FsgModel fsg) {
+        decoder.setFsg(name, fsg);
+    }
+    
+    public void setLm(String name, NGramModel lm) {
+        decoder.setLm(name, lm);
+    }
+    
+    public void setKws(String name, String keyphrase) {
+        decoder.setKws(name, keyphrase);
+    }
+    
+    public SWIGTYPE_p_LogMath getLogmath() {
+        return decoder.getLogmath();
     }
 
     private class ResultCallback implements Runnable {
