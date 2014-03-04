@@ -132,6 +132,7 @@ LOCAL_SRC_FILES := \
   fsg_history.c   \
   fsg_lextree.c   \
   fsg_search.c   \
+  kws_detections.c \
   kws_search.c   \
   hmm.c.arm     \
   mdef.c     \
