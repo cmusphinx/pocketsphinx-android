@@ -9,24 +9,29 @@ import android.util.Log;
 import static android.os.Environment.getExternalStorageState;
 
 
-public class SphinxUtil {
+/**
+ * Provides utility methods for copying asset files to external storage.
+ *
+ * @author Alexander Solovets
+ */
+public class Assets {
 
-    private static final String TAG = SphinxUtil.class.getSimpleName();
+    private static final String TAG = Assets.class.getSimpleName();
 
     /**
-     * Synchronizes application asset files.
+     * Synchronizes asset files with the content on external storage. There
+     * must be special file "assets.lst" among the application assets
+     * containing relative paths of assets to synchronize. If the corresponding
+     * path does not exist on the external storage it is copied. If the path
+     * exists checksums are compared and the asset is copied only if there is a
+     * mismatch. Checksum is stored in a separate asset with the name that
+     * consists of the original name and a suffix that depends on the checksum
+     * algorithm (e.g. MD5). Checksum files are copied along with the
+     * corresponding asset files.
      *
-     * This method does not use slow built-in asset listing method and reads
-     * "assets.lst" to get a list of files to synchronize. For each entry in
-     * the list it copies asset file only if it does not exist on external
-     * storage or there is hash mismatch between the two. The hash value must
-     * be provided in a single line file with the same name as the target file
-     * and ".md5" suffix. See PocketSphinxAndroidDemo for the reference
-     * implementation of asset setup.
-     *
-     * @param Context Application context.
-     *
-     * @return Path to the root of resources directory on external storage.
+     * @param Context application context
+     * @return path to the root of resources directory on external storage
+     * @throws IOException if an I/O error occurs or "assets.lst" is missing
      */
     public static File syncAssets(Context context) throws IOException {
         AssetManager assets = context.getAssets();
@@ -64,20 +69,19 @@ public class SphinxUtil {
     }
 
     /**
-     * Copies application asset files to external storage.
+     * Copies application asset files to external storage. Recursively copies
+     * asset files to a directory located on external storage and unique for
+     * application. If a file already exists it will be overwritten.
      *
-     * Recursively copies asset files stored in .apk to a directory located on
-     * external storage and unique for application. If a file already exists it
-     * will be overwritten. In general this method should not be used to
+     * <p>In general this method should not be used to
      * synchronize application resources and is only provided for compatibility
      * with projects without "smart" asset setup. If you are looking for quick
      * and "smart" synchronization that does not overwrite existing files use
      * {@link #syncAssets(Context, String)}.
      *
-     * @param context Application context.
-     * @param path    Relative path to asset file or directory.
-     *
-     * @return Path to the root of resources directory on external storage.
+     * @param context application context
+     * @param path    relative path to asset file or directory
+     * @return path to the root of resources directory on external storage
      *
      * @see #syncAssets
      */
@@ -101,21 +105,18 @@ public class SphinxUtil {
     }
 
     /**
-     * Returns external files directory for the application.
+     * Returns external files directory for the application.  Returns path to
+     * directory on external storage which is guaranteed to be unique for the
+     * running application.
      *
-     * Returns path to directory on external storage which is guaranteed to be
-     * unique for the running application.
-     *
-     * @param content Application context
-     *
-     * @returns Path to application directory or null if it does not exists
+     * @param content application context
+     * @return path to application directory or null if it does not exists
+     * @throws IOException if the directory does not exist
      *
      * @see android.content.Context#getExternalFilesDir
      * @see android.os.Environment#getExternalStorageState
      */
-    public static File getApplicationDir(Context context)
-        throws IOException
-    {
+    public static File getApplicationDir(Context context) throws IOException {
         File dir = context.getExternalFilesDir(null);
         if (null == dir)
             throw new IOException("cannot get external files dir, " +
@@ -125,10 +126,13 @@ public class SphinxUtil {
     }
 
     /**
-     * Copies raw asset resources to external storage of the device.
+     * Copies raw asset resources to external storage of the device.  Copies
+     * raw asset resources to external storage of the device.  Implementation
+     * is borrowed from Apache Commons.
      *
-     * Copies raw asset resources to external storage of the device.
-     * Implementation is borrowed from Apache Commons.
+     * @param source source stream
+     * @param dest   destination stream
+     * @throws IOException if an I/O error occurs
      */
     private static void copyStream(InputStream source, OutputStream dest)
         throws IOException
