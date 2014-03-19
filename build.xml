@@ -28,6 +28,7 @@
       destdir="build/classes"
       includeAntRuntime="false"
       classpath="${sdk.dir}/platforms/android-${sdk.vsn}/android.jar">
+      <compilerarg value="-Xlint:-options"/>
       <src path="gen"/>
       <src path="src"/>
     </javac>
