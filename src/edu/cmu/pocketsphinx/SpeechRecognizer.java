@@ -1,7 +1,8 @@
 package edu.cmu.pocketsphinx;
 
+import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Vector;
+import java.util.List;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -33,7 +34,8 @@ public class SpeechRecognizer {
     private final HandlerThread handlerThread;
 
     private final Handler mainLoopHandler = new Handler(Looper.getMainLooper());
-    private Collection<RecognitionListener> listeners = new Vector<RecognitionListener>();
+    private Collection<RecognitionListener> listeners =
+        new ArrayList<RecognitionListener>();
 
     private final short[] buffer = new short[1024];
     private boolean vadState = false;
@@ -59,11 +61,15 @@ public class SpeechRecognizer {
     }
 
     public void addListener(RecognitionListener listener) {
-        listeners.add(listener);
+        synchronized (listeners) {
+            listeners.add(listener);
+        }
     }
 
     public void removeListener(RecognitionListener listener) {
-        listeners.remove(listener);
+        synchronized (listeners) {
+            listeners.remove(listener);
+        }
     }
 
     public void startListening() {
@@ -197,8 +203,9 @@ public class SpeechRecognizer {
 
         @Override
         public void run() {
-            for (RecognitionListener l : listeners)
-                l.onPartialResult(hypothesis);
+            RecognitionListener[] emptyArray = new RecognitionListener[0];
+            for (RecognitionListener listener : listeners.toArray(emptyArray))
+                listener.onPartialResult(hypothesis);
         }
     }
 
@@ -212,8 +219,9 @@ public class SpeechRecognizer {
 
         @Override
         public void run() {
-            for (RecognitionListener l : listeners)
-                l.onVadStateChanged(state);
+            RecognitionListener[] emptyArray = new RecognitionListener[0];
+            for (RecognitionListener listener : listeners.toArray(emptyArray))
+                listener.onVadStateChanged(state);
         }
     }
 }
