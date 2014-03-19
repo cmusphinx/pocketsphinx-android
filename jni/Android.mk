@@ -60,6 +60,7 @@ LOCAL_ARM_MODE := arm
 
 LOCAL_SRC_FILES := \
   fe_noise.c \
+  fe_prespch_buf.c \
   fe_interface.c \
   fe_sigproc.c \
   fe_warp_affine.c \

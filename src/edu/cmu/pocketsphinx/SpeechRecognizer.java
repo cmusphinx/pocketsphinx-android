@@ -36,6 +36,7 @@ public class SpeechRecognizer {
     private Collection<RecognitionListener> listeners = new Vector<RecognitionListener>();
 
     private final short[] buffer = new short[1024];
+    private boolean vadState = false;
 
     public SpeechRecognizer(Config config) {
         decoder = new Decoder(config);
@@ -94,12 +95,14 @@ public class SpeechRecognizer {
                 decoder.setSearch((String)msg.obj);
                 break;
             case MSG_STOP:
-                if (isActive())
+                if (isActive()) {
                     endUtterance();
+                }
                 break;
             case MSG_START:
-                if (!isActive())
+                if (!isActive()) {
                     startUtterance();
+                }
             case MSG_NEXT:
                 if (isActive())
                     continueUtterance();
@@ -110,6 +113,9 @@ public class SpeechRecognizer {
 
     private void startUtterance() {
         decoder.startUtt(null);
+        handler.removeMessages(MSG_STOP);
+        handler.removeMessages(MSG_START);
+        vadState = false;
         recorder.startRecording();
     }
 
@@ -121,6 +127,11 @@ public class SpeechRecognizer {
             return;
         } else if (nread > 0) {
             decoder.processRaw(buffer, nread, false, false);
+            boolean curVadState = decoder.getVadState();
+            if (curVadState != vadState) {
+                vadState = curVadState;
+                mainLoopHandler.post(new VadStateChangedCallback(vadState));
+            }
             final Hypothesis hypothesis = decoder.hyp();
             if (null != hypothesis)
                 mainLoopHandler.post(new PartialResultCallback(hypothesis));
@@ -143,6 +154,10 @@ public class SpeechRecognizer {
             mainLoopHandler.post(new ResultCallback(hypothesis));
     }
     
+    public String getSearchName() {
+        return decoder.getSearch();
+    }
+    
     public void setFsg(String name, FsgModel fsg) {
         decoder.setFsg(name, fsg);
     }
@@ -154,7 +169,7 @@ public class SpeechRecognizer {
     public void setKws(String name, String keyphrase) {
         decoder.setKws(name, keyphrase);
     }
-    
+        
     public SWIGTYPE_p_LogMath getLogmath() {
         return decoder.getLogmath();
     }
@@ -184,6 +199,21 @@ public class SpeechRecognizer {
         public void run() {
             for (RecognitionListener l : listeners)
                 l.onPartialResult(hypothesis);
+        }
+    }
+
+    private class VadStateChangedCallback implements Runnable {
+
+        private final boolean state;
+
+        public VadStateChangedCallback(boolean state) {
+            this.state = state;
+        }
+
+        @Override
+        public void run() {
+            for (RecognitionListener l : listeners)
+                l.onVadStateChanged(state);
         }
     }
 }
