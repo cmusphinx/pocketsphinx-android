@@ -1,18 +1,18 @@
 package edu.cmu.pocketsphinx;
 
-import java.util.ArrayList;
+import static java.lang.String.format;
+
+import java.io.File;
+
 import java.util.Collection;
 import java.util.HashSet;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
-import android.media.MediaRecorder;
+import android.media.MediaRecorder.AudioSource;
 
-import android.os.Handler;
+import android.os.*;
 import android.os.Handler.Callback;
-import android.os.HandlerThread;
-import android.os.Looper;
-import android.os.Message;
 
 import android.util.Log;
 
@@ -20,39 +20,62 @@ import edu.cmu.pocketsphinx.Config;
 import edu.cmu.pocketsphinx.Decoder;
 import edu.cmu.pocketsphinx.Hypothesis;
 
+
 public class SpeechRecognizer {
 
+    private static final String TAG = SpeechRecognizer.class.getSimpleName();
+
     private static final int MSG_START = 1;
-    private static final int MSG_NEXT = 2;
+    private static final int MSG_ADVANCE = 2;
     private static final int MSG_STOP = 3;
-    private static final int MSG_SET_SEARCH = 4;
+    private static final int MSG_CANCEL = 4;
 
     private final AudioRecord recorder;
+    private final Config config;
     private final Decoder decoder;
 
     private final Handler handler;
-    private final HandlerThread handlerThread;
 
     private final Handler mainLoopHandler = new Handler(Looper.getMainLooper());
     private Collection<RecognitionListener> listeners =
         new HashSet<RecognitionListener>();
 
     private final short[] buffer = new short[1024];
-    private boolean vadState = false;
+    private boolean vadState;
 
-    public SpeechRecognizer(Config config) {
+    /**
+     * Creates new speech recognizer with default configuration.
+     */
+    public SpeechRecognizer() {
+        this(Decoder.defaultConfig());
+    }
+
+    /**
+     * Creates new speech recognizer using configuration file.
+     *
+     * @param configFile configuration file
+     */
+    public SpeechRecognizer(File configFile) {
+        this(Decoder.fileConfig(configFile.getPath()));
+    }
+
+    protected SpeechRecognizer(Config config) {
+        int sampleRate = (int) config.getFloat("-samprate");
+        if (config.getFloat("-samprate") != sampleRate)
+            throw new IllegalArgumentException("sampling rate must be integer");
+
+        this.config = config;
         decoder = new Decoder(config);
-        recorder = new AudioRecord(MediaRecorder.AudioSource.VOICE_RECOGNITION,
-                                   (int) config.getFloat("-samprate"),
+        recorder = new AudioRecord(AudioSource.VOICE_RECOGNITION,
+                                   sampleRate,
                                    AudioFormat.CHANNEL_IN_MONO,
                                    AudioFormat.ENCODING_PCM_16BIT,
-                                   8192);
+                                   8192); // TODO: calculate properly
 
-        handlerThread = new HandlerThread(getClass().getSimpleName());
-        handlerThread.start();
+        HandlerThread thread = new HandlerThread(getClass().getSimpleName());
+        thread.start();
 
-        handler = new Handler(handlerThread.getLooper(), new Callback() {
-
+        handler = new Handler(thread.getLooper(), new Callback() {
             @Override
             public boolean handleMessage(Message msg) {
                 return SpeechRecognizer.this.handleMessage(msg);
@@ -60,30 +83,48 @@ public class SpeechRecognizer {
         });
     }
 
+    /**
+     * Adds listener.
+     */
     public void addListener(RecognitionListener listener) {
         synchronized (listeners) {
             listeners.add(listener);
         }
     }
 
+    /**
+     * Removes listener.
+     */
     public void removeListener(RecognitionListener listener) {
         synchronized (listeners) {
             listeners.remove(listener);
         }
     }
 
-    public void startListening() {
-        sendMessage(MSG_START);
+    /**
+     * Starts recognition.
+     */
+    public void startListening(String searchName) {
+        sendMessage(MSG_START, searchName);
     }
 
+    /**
+     * Stops recognition.
+     */
     public void stopListening() {
         sendMessage(MSG_STOP);
     }
-    
-    public void setSearch(String searchName) {
-        handler.sendMessage(handler.obtainMessage(MSG_SET_SEARCH, (Object)searchName));
+
+    /**
+     * Cancels recogition.
+     */
+    public void cancel() {
+        sendMessage(MSG_CANCEL);
     }
 
+    /**
+     * Sets active search.
+     */
     public boolean isActive() {
         int state = recorder.getRecordingState();
         return AudioRecord.RECORDSTATE_RECORDING == state;
@@ -93,23 +134,23 @@ public class SpeechRecognizer {
         handler.sendMessage(handler.obtainMessage(what));
     }
 
+    private void sendMessage(int what, Object object) {
+        handler.sendMessage(handler.obtainMessage(what, object));
+    }
+
     private boolean handleMessage(Message msg) {
         switch (msg.what) {
             default:
                 return false;
-            case MSG_SET_SEARCH:
-                decoder.setSearch((String)msg.obj);
-                break;
             case MSG_STOP:
-                if (isActive()) {
-                    endUtterance();
-                }
+            case MSG_CANCEL:
+                if (isActive())
+                    endUtterance(MSG_CANCEL == msg.what);
                 break;
             case MSG_START:
-                if (!isActive()) {
-                    startUtterance();
-                }
-            case MSG_NEXT:
+                if (!isActive())
+                    startUtterance((String) msg.obj);
+            case MSG_ADVANCE:
                 if (isActive())
                     continueUtterance();
         }
@@ -117,11 +158,11 @@ public class SpeechRecognizer {
         return true;
     }
 
-    private void startUtterance() {
-        decoder.startUtt(null);
-        handler.removeMessages(MSG_STOP);
-        handler.removeMessages(MSG_START);
+    private void startUtterance(String searchName) {
+        Log.i(TAG, format("Recognition started, search is \"%s\"", searchName));
         vadState = false;
+        decoder.setSearch(searchName);
+        decoder.startUtt(null);
         recorder.startRecording();
     }
 
@@ -129,8 +170,7 @@ public class SpeechRecognizer {
         int nread = recorder.read(buffer, 0, buffer.length);
 
         if (-1 == nread) {
-            sendMessage(MSG_STOP);
-            return;
+            throw new RuntimeException("error reading audio buffer");
         } else if (nread > 0) {
             decoder.processRaw(buffer, nread, false, false);
             boolean curVadState = decoder.getVadState();
@@ -145,41 +185,84 @@ public class SpeechRecognizer {
                 mainLoopHandler.post(new PartialResultCallback(hypothesis));
         }
 
-        sendMessage(MSG_NEXT);
+        sendMessage(MSG_ADVANCE);
     }
 
-    private void endUtterance() {
+    private void endUtterance(boolean canceled) {
         recorder.stop();
         int nread = recorder.read(buffer, 0, buffer.length);
-        Log.d(getClass().getSimpleName(), "recorder.read returned " + nread);
         if (nread > 0)
             decoder.processRaw(buffer, nread, false, false);
 
         decoder.endUtt();
-        handler.removeMessages(MSG_NEXT);
-        final Hypothesis hypothesis = decoder.hyp();
-        if (null != hypothesis)
-            mainLoopHandler.post(new ResultCallback(hypothesis));
+
+        if (!canceled) {
+            Log.i(TAG, "Recognition ended");
+            final Hypothesis hypothesis = decoder.hyp();
+            if (null != hypothesis)
+                mainLoopHandler.post(new ResultCallback(hypothesis));
+        } else {
+            Log.i(TAG, "Recognition canceled");
+        }
     }
-    
+
+    /**
+     * Gets name of the active search.
+     */
     public String getSearchName() {
         return decoder.getSearch();
     }
-    
-    public void setFsg(String name, FsgModel fsg) {
-        decoder.setFsg(name, fsg);
+
+    public void addFsgSearch(String searchName, FsgModel fsgModel) {
+        decoder.setFsg(searchName, fsgModel);
     }
-    
-    public void setLm(String name, NGramModel lm) {
-        decoder.setLm(name, lm);
+
+    /**
+     * Adds searchs based on JSpeech grammar.
+     *
+     * @param searchName search name
+     * @param grammarPath path to a JSGF file
+     */
+    public void addGrammarSearch(String searchName, File grammarFile) {
+        Log.i(TAG, format("Load JSGF %s", grammarFile));
+        Jsgf jsgf = new Jsgf(grammarFile.getPath());
+
+        for (JsgfRule rule : jsgf) {
+            if (!rule.isPublic())
+                continue;
+
+            int lw = config.getInt("-lw");
+            Log.i(TAG, format("Use rule %s to build FSG", rule.getName()));
+            addFsgSearch(searchName,
+                    jsgf.buildFsg(rule, decoder.getLogmath(), lw));
+
+            return;
+        }
+
+        throw new IllegalArgumentException("grammar has no public rules");
     }
-    
-    public void setKws(String name, String keyphrase) {
-        decoder.setKws(name, keyphrase);
+
+    /**
+     * Adds search based on N-gram language model.
+     *
+     * @param searchName search name
+     * @param ngramModel path to a N-gram model file
+     */
+    public void addNgramSearch(String searchName, File modelFile) {
+        String path = modelFile.getPath();
+        Log.i(TAG, format("Loadr N-gram model %s", path));
+        NGramModel lm = new NGramModel(config, decoder.getLogmath(), path);
+        decoder.setLm(searchName, lm);
     }
-        
-    public SWIGTYPE_p_LogMath getLogmath() {
-        return decoder.getLogmath();
+
+    /**
+     * Adds search based on a single phrase.
+     *
+     * @param searchName search name
+     * @param keyphrase search phrase
+     */
+    public void addKeywordSearch(String searchName, String keyphrase) {
+        decoder.setKws(searchName, keyphrase);
     }
 
     private abstract class RecognitionCallback implements Runnable {
@@ -193,41 +276,35 @@ public class SpeechRecognizer {
     }
 
     private class SpeechStartCallback extends RecognitionCallback {
-        @Override
-        protected void execute(RecognitionListener listener) {
+        @Override protected void execute(RecognitionListener listener) {
             listener.onBeginningOfSpeech();
         }
     }
 
     private class SpeechEndCallback extends RecognitionCallback {
-        @Override
-        protected void execute(RecognitionListener listener) {
+        @Override protected void execute(RecognitionListener listener) {
             listener.onEndOfSpeech();
         }
     }
 
     private class ResultCallback extends RecognitionCallback {
-
         protected final Hypothesis hypothesis;
 
         public ResultCallback(Hypothesis hypothesis) {
             this.hypothesis = hypothesis;
         }
 
-        @Override
-        public void execute(RecognitionListener listener) {
+        @Override protected void execute(RecognitionListener listener) {
             listener.onResult(hypothesis);
         }
     }
 
     private class PartialResultCallback extends ResultCallback {
-
         public PartialResultCallback(Hypothesis hypothesis) {
             super(hypothesis);
         }
 
-        @Override
-        public void execute(RecognitionListener listener) {
+        @Override protected void execute(RecognitionListener listener) {
             listener.onPartialResult(hypothesis);
         }
     }

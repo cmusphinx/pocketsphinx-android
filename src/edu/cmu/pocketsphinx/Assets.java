@@ -105,7 +105,7 @@ public class Assets {
     }
 
     /**
-     * Returns external files directory for the application.  Returns path to
+     * Returns external files directory for the application. Returns path to
      * directory on external storage which is guaranteed to be unique for the
      * running application.
      *
@@ -126,8 +126,8 @@ public class Assets {
     }
 
     /**
-     * Copies raw asset resources to external storage of the device.  Copies
-     * raw asset resources to external storage of the device.  Implementation
+     * Copies raw asset resources to external storage of the device. Copies
+     * raw asset resources to external storage of the device. Implementation
      * is borrowed from Apache Commons.
      *
      * @param source source stream
