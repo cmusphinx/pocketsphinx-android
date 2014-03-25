@@ -2,7 +2,7 @@ package edu.cmu.pocketsphinx;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
+import java.util.HashSet;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
@@ -35,7 +35,7 @@ public class SpeechRecognizer {
 
     private final Handler mainLoopHandler = new Handler(Looper.getMainLooper());
     private Collection<RecognitionListener> listeners =
-        new ArrayList<RecognitionListener>();
+        new HashSet<RecognitionListener>();
 
     private final short[] buffer = new short[1024];
     private boolean vadState = false;
