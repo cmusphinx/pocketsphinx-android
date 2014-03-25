@@ -190,8 +190,9 @@ public class SpeechRecognizer {
 
         @Override
         public void run() {
-            for (RecognitionListener l : listeners)
-                l.onResult(hypothesis);
+            RecognitionListener[] emptyArray = new RecognitionListener[0];
+            for (RecognitionListener listener : listeners.toArray(emptyArray))
+                listener.onResult(hypothesis);
         }
     }
 
