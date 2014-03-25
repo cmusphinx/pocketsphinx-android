@@ -135,8 +135,10 @@ public class SpeechRecognizer {
             decoder.processRaw(buffer, nread, false, false);
             boolean curVadState = decoder.getVadState();
             if (curVadState != vadState) {
-                vadState = curVadState;
-                mainLoopHandler.post(new VadStateChangedCallback(vadState));
+                if (vadState = curVadState)
+                    mainLoopHandler.post(new SpeechStartCallback());
+                else
+                    mainLoopHandler.post(new SpeechEndCallback());
             }
             final Hypothesis hypothesis = decoder.hyp();
             if (null != hypothesis)
@@ -180,7 +182,31 @@ public class SpeechRecognizer {
         return decoder.getLogmath();
     }
 
-    private class ResultCallback implements Runnable {
+    private abstract class RecognitionCallback implements Runnable {
+        public void run() {
+            RecognitionListener[] emptyArray = new RecognitionListener[0];
+            for (RecognitionListener listener : listeners.toArray(emptyArray))
+                execute(listener);
+        }
+
+        protected abstract void execute(RecognitionListener listener);
+    }
+
+    private class SpeechStartCallback extends RecognitionCallback {
+        @Override
+        protected void execute(RecognitionListener listener) {
+            listener.onBeginningOfSpeech();
+        }
+    }
+
+    private class SpeechEndCallback extends RecognitionCallback {
+        @Override
+        protected void execute(RecognitionListener listener) {
+            listener.onEndOfSpeech();
+        }
+    }
+
+    private class ResultCallback extends RecognitionCallback {
 
         protected final Hypothesis hypothesis;
 
@@ -189,10 +215,8 @@ public class SpeechRecognizer {
         }
 
         @Override
-        public void run() {
-            RecognitionListener[] emptyArray = new RecognitionListener[0];
-            for (RecognitionListener listener : listeners.toArray(emptyArray))
-                listener.onResult(hypothesis);
+        public void execute(RecognitionListener listener) {
+            listener.onResult(hypothesis);
         }
     }
 
@@ -203,26 +227,8 @@ public class SpeechRecognizer {
         }
 
         @Override
-        public void run() {
-            RecognitionListener[] emptyArray = new RecognitionListener[0];
-            for (RecognitionListener listener : listeners.toArray(emptyArray))
-                listener.onPartialResult(hypothesis);
-        }
-    }
-
-    private class VadStateChangedCallback implements Runnable {
-
-        private final boolean state;
-
-        public VadStateChangedCallback(boolean state) {
-            this.state = state;
-        }
-
-        @Override
-        public void run() {
-            RecognitionListener[] emptyArray = new RecognitionListener[0];
-            for (RecognitionListener listener : listeners.toArray(emptyArray))
-                listener.onVadStateChanged(state);
+        public void execute(RecognitionListener listener) {
+            listener.onPartialResult(hypothesis);
         }
     }
 }
