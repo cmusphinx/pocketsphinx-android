@@ -202,6 +202,9 @@ public class SpeechRecognizer {
 
             recorder.stop();
             int nread = recorder.read(buffer, 0, buffer.length);
+            recorder.release();
+            recorder = null;
+
             decoder.processRaw(buffer, nread, false, false);
             decoder.endUtt();
             mainHandler.removeCallbacksAndMessages(null);
