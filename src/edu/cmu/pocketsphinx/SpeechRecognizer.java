@@ -12,7 +12,6 @@ import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
 
 import android.os.*;
-import android.os.Handler.Callback;
 
 import android.util.Log;
 
@@ -26,62 +25,28 @@ public class SpeechRecognizer {
     protected static final String TAG = SpeechRecognizer.class.getSimpleName();
 
     private static final int MSG_START = 1;
-    private static final int MSG_ADVANCE = 2;
-    private static final int MSG_STOP = 3;
-    private static final int MSG_CANCEL = 4;
+    private static final int MSG_STOP = 2;
+    private static final int MSG_CANCEL = 3;
 
-    private final AudioRecord recorder;
+    private static final int BUFFER_SIZE = 1024;
+
     private final Config config;
     private final Decoder decoder;
 
-    private final Handler handler;
-
-    private final Handler mainLoopHandler =
-        new Handler(Looper.getMainLooper());
-    private Collection<RecognitionListener> listeners =
+    private Thread recognizerThread;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final Collection<RecognitionListener> listeners =
         new HashSet<RecognitionListener>();
 
-    private final short[] buffer = new short[1024];
-    private boolean vadState;
-
-    /**
-     * Creates new speech recognizer with default configuration.
-     */
-    public SpeechRecognizer() {
-        this(Decoder.defaultConfig());
-    }
-
-    /**
-     * Creates new speech recognizer using configuration file.
-     *
-     * @param configFile configuration file
-     */
-    public SpeechRecognizer(File configFile) {
-        this(Decoder.fileConfig(configFile.getPath()));
-    }
+    private final int sampleRate;
 
     protected SpeechRecognizer(Config config) {
-        int sampleRate = (int) config.getFloat("-samprate");
+        sampleRate = (int) config.getFloat("-samprate");
         if (config.getFloat("-samprate") != sampleRate)
             throw new IllegalArgumentException("sampling rate must be integer");
 
         this.config = config;
         decoder = new Decoder(config);
-        recorder = new AudioRecord(AudioSource.VOICE_RECOGNITION,
-                                   sampleRate,
-                                   AudioFormat.CHANNEL_IN_MONO,
-                                   AudioFormat.ENCODING_PCM_16BIT,
-                                   8192); // TODO: calculate properly
-
-        HandlerThread thread = new HandlerThread(getClass().getSimpleName());
-        thread.start();
-
-        handler = new Handler(thread.getLooper(), new Callback() {
-            @Override
-            public boolean handleMessage(Message msg) {
-                return SpeechRecognizer.this.handleMessage(msg);
-            }
-        });
     }
 
     /**
@@ -104,109 +69,50 @@ public class SpeechRecognizer {
 
     /**
      * Starts recognition.
+     *
+     * @return true if recognition was actually started, false otherwise
      */
-    public void startListening(String searchName) {
-        sendMessage(MSG_START, searchName);
+    public boolean startListening(String searchName) {
+        if (null != recognizerThread)
+            return false;
+
+        Log.i(TAG, format("Start recognition \"%s\"", searchName));
+        decoder.setSearch(searchName);
+        recognizerThread = new RecognizerThread();
+        recognizerThread.start();
+        return true;
     }
 
     /**
      * Stops recognition. All listeners should receive final result if there is
      * any.
      */
-    public void stop() {
-        sendMessage(MSG_STOP);
+    public boolean stop() {
+        if (null == recognizerThread)
+            return false;
+
+        try {
+            recognizerThread.interrupt();
+            recognizerThread.join();
+        } catch (InterruptedException e) {
+            throw new IllegalStateException("", e);
+        }
+
+        recognizerThread = null;
+        return true;
     }
 
     /**
      * Cancels recogition. Listeners do not recevie final result.
      */
     public void cancel() {
-        sendMessage(MSG_CANCEL);
+        // TODO: implement
     }
 
     /**
-     * Sets active search.
-     */
-    public boolean isActive() {
-        int state = recorder.getRecordingState();
-        return AudioRecord.RECORDSTATE_RECORDING == state;
-    }
-
-    private void sendMessage(int what) {
-        handler.sendMessage(handler.obtainMessage(what));
-    }
-
-    private void sendMessage(int what, Object object) {
-        handler.sendMessage(handler.obtainMessage(what, object));
-    }
-
-    private boolean handleMessage(Message msg) {
-        switch (msg.what) {
-            default:
-                return false;
-            case MSG_STOP:
-            case MSG_CANCEL:
-                if (isActive())
-                    endUtterance(MSG_CANCEL == msg.what);
-                break;
-            case MSG_START:
-                if (!isActive())
-                    startUtterance((String) msg.obj);
-            case MSG_ADVANCE:
-                if (isActive())
-                    continueUtterance();
-        }
-
-        return true;
-    }
-
-    private void startUtterance(String searchName) {
-        Log.i(TAG, format("Recognition started, search is \"%s\"", searchName));
-        vadState = false;
-        decoder.setSearch(searchName);
-        decoder.startUtt(null);
-        recorder.startRecording();
-    }
-
-    private void continueUtterance() {
-        int nread = recorder.read(buffer, 0, buffer.length);
-
-        if (-1 == nread) {
-            throw new RuntimeException("error reading audio buffer");
-        } else if (nread > 0) {
-            decoder.processRaw(buffer, nread, false, false);
-
-            if (decoder.getVadState() != vadState) {
-                vadState = decoder.getVadState();
-                mainLoopHandler.post(new VadStateChangeEvent(vadState));
-            }
-
-            final Hypothesis hypothesis = decoder.hyp();
-            if (null != hypothesis)
-                mainLoopHandler.post(new ResultEvent(hypothesis, true));
-        }
-
-        sendMessage(MSG_ADVANCE);
-    }
-
-    private void endUtterance(boolean canceled) {
-        recorder.stop();
-        int nread = recorder.read(buffer, 0, buffer.length);
-        decoder.processRaw(buffer, nread, false, false);
-        decoder.endUtt();
-
-        if (!canceled) {
-            Log.i(TAG, "Recognition ended");
-            final Hypothesis hypothesis = decoder.hyp();
-            if (null != hypothesis)
-                mainLoopHandler.post(new ResultEvent(hypothesis, true));
-        } else {
-            Log.i(TAG, "Recognition canceled");
-        }
-    }
-
-    /**
-     * Gets name of the active search.
+     * Gets name of the currently active search.
+     *
+     * @return active search name or null if no search was started
      */
     public String getSearchName() {
         return decoder.getSearch();
@@ -217,7 +123,7 @@ public class SpeechRecognizer {
     }
 
     /**
-     * Adds searchs based on JSpeech grammar.
+     * Adds searches based on JSpeech grammar.
      *
      * @param name search name
      * @param file JSGF file
@@ -262,6 +168,50 @@ public class SpeechRecognizer {
         decoder.setKws(name, phrase);
     }
 
+    private final class RecognizerThread extends Thread {
+        @Override public void run() {
+            AudioRecord recorder =
+                new AudioRecord(AudioSource.VOICE_RECOGNITION,
+                                sampleRate,
+                                AudioFormat.CHANNEL_IN_MONO,
+                                AudioFormat.ENCODING_PCM_16BIT,
+                                8192); // TODO:calculate properly
+            decoder.startUtt(null);
+            recorder.startRecording();
+            short[] buffer = new short[BUFFER_SIZE];
+            boolean vadState = decoder.getVadState();
+
+            while (!interrupted()) {
+                int nread = recorder.read(buffer, 0, buffer.length);
+
+                if (-1 == nread) {
+                    throw new RuntimeException("error reading audio buffer");
+                } else if (nread > 0) {
+                    decoder.processRaw(buffer, nread, false, false);
+
+                    if (decoder.getVadState() != vadState) {
+                        vadState = decoder.getVadState();
+                        mainHandler.post(new VadStateChangeEvent(vadState));
+                    }
+
+                    final Hypothesis hypothesis = decoder.hyp();
+                    if (null != hypothesis)
+                        mainHandler.post(new ResultEvent(hypothesis, false));
+                }
+            }
+
+            recorder.stop();
+            int nread = recorder.read(buffer, 0, buffer.length);
+            decoder.processRaw(buffer, nread, false, false);
+            decoder.endUtt();
+            mainHandler.removeCallbacksAndMessages(null);
+
+            final Hypothesis hypothesis = decoder.hyp();
+            if (null != hypothesis)
+                mainHandler.post(new ResultEvent(hypothesis, true));
+        }
+    }
+
     private abstract class RecognitionEvent implements Runnable {
         public void run() {
             RecognitionListener[] emptyArray = new RecognitionListener[0];
@@ -289,18 +239,18 @@ public class SpeechRecognizer {
 
     private class ResultEvent extends RecognitionEvent {
         protected final Hypothesis hypothesis;
-        private final boolean partial;
+        private final boolean finalResult;
 
-        ResultEvent(Hypothesis hypothesis, boolean partial) {
+        ResultEvent(Hypothesis hypothesis, boolean finalResult) {
             this.hypothesis = hypothesis;
-            this.partial = partial;
+            this.finalResult = finalResult;
         }
 
         @Override protected void execute(RecognitionListener listener) {
-            if (partial)
-                listener.onPartialResult(hypothesis);
-            else
+            if (finalResult)
                 listener.onResult(hypothesis);
+            else
+                listener.onPartialResult(hypothesis);
         }
     }
 }
