@@ -6,7 +6,7 @@ import static edu.cmu.pocketsphinx.Decoder.fileConfig;
 import java.io.File;
 
 
-public class SpeechRecognizerBuilder {
+public class SpeechRecognizerSetup {
 
     static {
         System.loadLibrary("pocketsphinx_jni");
@@ -17,8 +17,8 @@ public class SpeechRecognizerBuilder {
     /**
      * Creates new speech recognizer builder with default configuration.
      */
-    public static SpeechRecognizerBuilder getBuilder() {
-        return new SpeechRecognizerBuilder(defaultConfig());
+    public static SpeechRecognizerSetup defaultSetup() {
+        return new SpeechRecognizerSetup(defaultConfig());
     }
 
     /**
@@ -27,54 +27,54 @@ public class SpeechRecognizerBuilder {
      *
      * @param configFile configuration file
      */
-    public static SpeechRecognizerBuilder getBuilder(File configFile) {
-        return new SpeechRecognizerBuilder(fileConfig(configFile.getPath()));
+    public static SpeechRecognizerSetup setupFromFile(File configFile) {
+        return new SpeechRecognizerSetup(fileConfig(configFile.getPath()));
     }
 
-    private SpeechRecognizerBuilder(Config config) {
+    private SpeechRecognizerSetup(Config config) {
         this.config = config;
     }
 
-    public SpeechRecognizer buildRecognizer() {
+    public SpeechRecognizer getRecognizer() {
         return new SpeechRecognizer(config);
     }
 
-    public SpeechRecognizerBuilder setAcousticModel(File model) {
+    public SpeechRecognizerSetup setAcousticModel(File model) {
         return setString("-hmm", model.getPath());
     }
 
-    public SpeechRecognizerBuilder setDictionary(File dictionary) {
+    public SpeechRecognizerSetup setDictionary(File dictionary) {
         return setString("-dict", dictionary.getPath());
     }
 
-    public SpeechRecognizerBuilder setSampleRate(int rate) {
+    public SpeechRecognizerSetup setSampleRate(int rate) {
         return setFloat("-samprate", rate);
     }
 
-    public SpeechRecognizerBuilder setRawLogDir(File dir) {
+    public SpeechRecognizerSetup setRawLogDir(File dir) {
         return setString("-rawlogdir", dir.getPath());
     }
 
-    public SpeechRecognizerBuilder setKeywordThreshold(float threshold) {
+    public SpeechRecognizerSetup setKeywordThreshold(float threshold) {
         return setFloat("-kws_threshold", threshold);
     }
 
-    public SpeechRecognizerBuilder setBoolean(String key, boolean value) {
+    public SpeechRecognizerSetup setBoolean(String key, boolean value) {
         config.setBoolean(key, value);
         return this;
     }
 
-    public SpeechRecognizerBuilder setInteger(String key, int value) {
+    public SpeechRecognizerSetup setInteger(String key, int value) {
         config.setInt(key, value);
         return this;
     }
 
-    public SpeechRecognizerBuilder setFloat(String key, float value) {
+    public SpeechRecognizerSetup setFloat(String key, float value) {
         config.setFloat(key, value);
         return this;
     }
 
-    public SpeechRecognizerBuilder setString(String key, String value) {
+    public SpeechRecognizerSetup setString(String key, String value) {
         config.setString(key, value);
         return this;
     }
