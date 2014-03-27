@@ -107,7 +107,8 @@ public class SpeechRecognizer {
      * Cancels recogition. Listeners do not recevie final result.
      */
     public void cancel() {
-        // TODO: implement
+        stop();
+        mainHandler.removeCallbacksAndMessages(null);
     }
 
     /**
@@ -204,12 +205,11 @@ public class SpeechRecognizer {
             recorder.stop();
             int nread = recorder.read(buffer, 0, buffer.length);
             recorder.release();
-            recorder = null;
-
             decoder.processRaw(buffer, nread, false, false);
             decoder.endUtt();
-            mainHandler.removeCallbacksAndMessages(null);
 
+            // Remove all pending notifications.
+            mainHandler.removeCallbacksAndMessages(null);
             final Hypothesis hypothesis = decoder.hyp();
             if (null != hypothesis)
                 mainHandler.post(new ResultEvent(hypothesis, true));
