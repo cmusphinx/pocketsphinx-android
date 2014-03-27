@@ -83,11 +83,7 @@ public class SpeechRecognizer {
         return true;
     }
 
-    /**
-     * Stops recognition. All listeners should receive final result if there is
-     * any.
-     */
-    public boolean stop() {
+    private boolean stopRecognizerThread() {
         if (null == recognizerThread)
             return false;
 
@@ -104,11 +100,28 @@ public class SpeechRecognizer {
     }
 
     /**
+     * Stops recognition. All listeners should receive final result if there is
+     * any.
+     */
+    public boolean stop() {
+        boolean result = stopRecognizerThread();
+        if (result)
+            Log.i(TAG, "Stop recognition");
+
+        return result;
+    }
+
+    /**
      * Cancels recogition. Listeners do not recevie final result.
      */
     public void cancel() {
-        stop();
-        mainHandler.removeCallbacksAndMessages(null);
+        boolean result = stopRecognizerThread();
+        if (result) {
+            Log.i(TAG, "Cancel recognition");
+            mainHandler.removeCallbacksAndMessages(null);
+        }
+
+        return result;
     }
 
     /**
