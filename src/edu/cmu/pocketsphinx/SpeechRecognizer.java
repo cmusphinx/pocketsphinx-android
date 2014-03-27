@@ -95,7 +95,8 @@ public class SpeechRecognizer {
             recognizerThread.interrupt();
             recognizerThread.join();
         } catch (InterruptedException e) {
-            throw new IllegalStateException("", e);
+            // Restore the interrupted status.
+            Thread.currentThread().interrupt();
         }
 
         recognizerThread = null;
