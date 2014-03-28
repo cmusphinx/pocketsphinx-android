@@ -68,9 +68,9 @@ public class SpeechRecognizer {
     }
 
     /**
-     * Starts recognition.
+     * Starts recognition. Does nothing if recognition is active.
      *
-     * @return true if recognition was actually started, false otherwise
+     * @return true if recognition was actually started
      */
     public boolean startListening(String searchName) {
         if (null != recognizerThread)
@@ -101,7 +101,9 @@ public class SpeechRecognizer {
 
     /**
      * Stops recognition. All listeners should receive final result if there is
-     * any.
+     * any. Does nothing if recognition is not active.
+     *
+     * @return true if recognition was actually stopped
      */
     public boolean stop() {
         boolean result = stopRecognizerThread();
@@ -112,9 +114,12 @@ public class SpeechRecognizer {
     }
 
     /**
-     * Cancels recogition. Listeners do not recevie final result.
+     * Cancels recogition. Listeners do not recevie final result. Does nothing
+     * if recognition is not active.
+     *
+     * @return true if recognition was actually canceled
      */
-    public void cancel() {
+    public boolean cancel() {
         boolean result = stopRecognizerThread();
         if (result) {
             Log.i(TAG, "Cancel recognition");
