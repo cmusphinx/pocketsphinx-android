@@ -1,6 +1,10 @@
 package edu.cmu.pocketsphinx;
 
+import static  android.content.Context.MODE_PRIVATE;
+
 import java.io.*;
+import java.util.HashSet;
+import java.util.Set;
 
 import android.content.Context;
 import android.content.res.AssetManager;
@@ -17,6 +21,8 @@ import static android.os.Environment.getExternalStorageState;
 public class Assets {
 
     private static final String TAG = Assets.class.getSimpleName();
+
+    private static final String ASSETS_LIST_PATH = ".assets";
 
     /**
      * Synchronizes asset files with the content on external storage. There
@@ -38,6 +44,7 @@ public class Assets {
         Reader reader = new InputStreamReader(assets.open("assets.lst"));
         BufferedReader br = new BufferedReader(reader);
         File extDir = getApplicationDir(context);
+        Set<String> assetPaths = new HashSet<String>();
         String path;
 
         while (null != (path = br.readLine())) {
@@ -45,6 +52,7 @@ public class Assets {
             String md5Path = path + ".md5";
             File extHash = new File(extDir, md5Path);
             extFile.getParentFile().mkdirs();
+            assetPaths.add(extFile.getPath());
 
             try {
                 // Read asset hash.
@@ -64,6 +72,8 @@ public class Assets {
             InputStream hashStream = assets.open(md5Path);
             copyStream(hashStream, new FileOutputStream(extHash));
         }
+
+        removeUnusedAssets(context, assetPaths);
 
         return extDir;
     }
@@ -88,20 +98,57 @@ public class Assets {
     public static File copyAssets(Context context, String path)
         throws IOException
     {
-        File extPath = new File(getApplicationDir(context), path);
+        File externalFile = new File(getApplicationDir(context), path);
         AssetManager assets = context.getAssets();
         String[] content = assets.list(path);
+        Set<String> assetPaths = new HashSet<String>();
 
         if (content.length > 0) {
             for (String item : content)
                 copyAssets(context, new File(path, item).getPath());
         } else {
-            Log.i(TAG, "copy " + path + " to " + extPath);
-            extPath.getParentFile().mkdirs();
-            copyStream(assets.open(path), new FileOutputStream(extPath));
+            Log.i(TAG, "copy " + path + " to " + externalFile);
+            externalFile.getParentFile().mkdirs();
+            copyStream(assets.open(path), new FileOutputStream(externalFile));
+            assetPaths.add(externalFile.getPath());
         }
 
-        return extPath;
+        removeUnusedAssets(context, assetPaths);
+
+        return externalFile;
+    }
+
+    private static void removeUnusedAssets(Context context,
+                                           Set<String> usedAssets)
+        throws IOException
+    {
+        try {
+            InputStream istream = context.openFileInput(ASSETS_LIST_PATH);
+            Reader reader = new InputStreamReader(istream);
+            BufferedReader br = new BufferedReader(reader);
+            Set<String> unusedAssets = new HashSet<String>();
+            String line;
+
+            while (null != (line = br.readLine()))
+                unusedAssets.add(line);
+
+            unusedAssets.removeAll(usedAssets);
+            for (String path : unusedAssets) {
+                new File(path).delete();
+                new File(path + ".md5").delete();
+                Log.i(TAG, "delete unused asset " + path);
+            }
+        } catch (FileNotFoundException e) {
+            Log.i(TAG, ASSETS_LIST_PATH + " does not exist");
+            Log.i(TAG, "unused assets are not removed");
+        }
+
+        OutputStream ostream = context.openFileOutput(ASSETS_LIST_PATH, 0);
+        PrintStream ps = new PrintStream(ostream);
+        for (String path : usedAssets)
+            ps.println(path);
+
+        ps.close();
     }
 
     /**
