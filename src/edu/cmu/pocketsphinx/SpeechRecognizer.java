@@ -150,7 +150,7 @@ public class SpeechRecognizer {
      */
     public void addGrammarSearch(String name, File file) {
         Log.i(TAG, format("Load JSGF %s", file));
-        decoder.setGrammarSearch(name, file.getPath());
+        decoder.setJsgfFile(name, file.getPath());
     }
 
     /**
@@ -161,7 +161,7 @@ public class SpeechRecognizer {
      */
     public void addNgramSearch(String name, File file) {
         Log.i(TAG, format("Load N-gram model %s", file));
-        decoder.setNgramSearch(name, file.getPath());
+        decoder.setLmFile(name, file.getPath());
     }
 
     /**
