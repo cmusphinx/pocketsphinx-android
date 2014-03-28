@@ -150,19 +150,7 @@ public class SpeechRecognizer {
      */
     public void addGrammarSearch(String name, File file) {
         Log.i(TAG, format("Load JSGF %s", file));
-        Jsgf jsgf = new Jsgf(file.getPath());
-
-        for (JsgfRule rule : jsgf) {
-            if (!rule.isPublic())
-                continue;
-
-            int lw = config.getInt("-lw");
-            Log.i(TAG, format("Use rule %s to build FSG", rule.getName()));
-            addFsgSearch(name, jsgf.buildFsg(rule, decoder.getLogmath(), lw));
-            return;
-        }
-
-        throw new IllegalArgumentException("grammar has no public rules");
+        decoder.setGrammarSearch(name, file.getPath());
     }
 
     /**
@@ -172,10 +160,8 @@ public class SpeechRecognizer {
      * @param file N-gram model file
      */
     public void addNgramSearch(String name, File file) {
-        String path = file.getPath();
-        Log.i(TAG, format("Load N-gram model %s", path));
-        NGramModel lm = new NGramModel(config, decoder.getLogmath(), path);
-        decoder.setLm(name, lm);
+        Log.i(TAG, format("Load N-gram model %s", file));
+        decoder.setNgramSearch(name, file.getPath());
     }
 
     /**
