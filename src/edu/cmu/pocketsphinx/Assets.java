@@ -22,7 +22,7 @@ public class Assets {
 
     private static final String TAG = Assets.class.getSimpleName();
 
-    private static final String ASSET_LIST_NAME = ".assets";
+    private static final String ASSET_LIST_NAME = "assets.lst";
 
     /**
      * Synchronizes asset files with the content on external storage. There
