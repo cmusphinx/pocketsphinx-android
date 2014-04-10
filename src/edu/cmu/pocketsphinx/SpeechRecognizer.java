@@ -24,10 +24,6 @@ public class SpeechRecognizer {
 
     protected static final String TAG = SpeechRecognizer.class.getSimpleName();
 
-    private static final int MSG_START = 1;
-    private static final int MSG_STOP = 2;
-    private static final int MSG_CANCEL = 3;
-
     private static final int BUFFER_SIZE = 1024;
 
     private final Config config;
