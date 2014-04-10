@@ -143,8 +143,8 @@ public class Assets {
 
             istream.close();
         } catch (FileNotFoundException e) {
-            Log.i(TAG, assetsListFile + " does not exist");
-            Log.i(TAG, "unused assets are not removed");
+            Log.i(TAG, assetsListFile +
+                       " does not exist, unused assets are not removed");
         }
 
         OutputStream ostream = new FileOutputStream(assetsListFile);
