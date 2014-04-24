@@ -3,21 +3,15 @@ package edu.cmu.pocketsphinx;
 import static java.lang.String.format;
 
 import java.io.File;
-
 import java.util.Collection;
 import java.util.HashSet;
 
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaRecorder.AudioSource;
-
-import android.os.*;
-
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
-
-import edu.cmu.pocketsphinx.Config;
-import edu.cmu.pocketsphinx.Decoder;
-import edu.cmu.pocketsphinx.Hypothesis;
 
 
 public class SpeechRecognizer {
@@ -26,7 +20,6 @@ public class SpeechRecognizer {
 
     private static final int BUFFER_SIZE = 1024;
 
-    private final Config config;
     private final Decoder decoder;
 
     private Thread recognizerThread;
@@ -40,8 +33,6 @@ public class SpeechRecognizer {
         sampleRate = (int) config.getFloat("-samprate");
         if (config.getFloat("-samprate") != sampleRate)
             throw new IllegalArgumentException("sampling rate must be integer");
-
-        this.config = config;
         decoder = new Decoder(config);
     }
 
