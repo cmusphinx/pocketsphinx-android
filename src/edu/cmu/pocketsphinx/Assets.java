@@ -1,192 +1,173 @@
 package edu.cmu.pocketsphinx;
 
-import static  android.content.Context.MODE_PRIVATE;
+import static android.os.Environment.getExternalStorageState;
 
 import java.io.*;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import android.content.Context;
 import android.content.res.AssetManager;
-import android.util.Log;
-
-import static android.os.Environment.getExternalStorageState;
 
 
 /**
- * Provides utility methods for copying asset files to external storage.
+ * Provides utility methods to keep asset files external storage.
  *
  * @author Alexander Solovets
  */
 public class Assets {
 
-    private static final String TAG = Assets.class.getSimpleName();
-
     private static final String ASSET_LIST_NAME = "assets.lst";
+    private static final String HASH_EXT = ".md5";
+
+    private final AssetManager assetManager;
+    private final File applicationDir;
 
     /**
-     * Synchronizes asset files with the content on external storage. There
-     * must be special file {@value #ASSET_LIST_NAME} among the application
-     * assets containing relative paths of assets to synchronize. If the
-     * corresponding path does not exist on the external storage it is copied.
-     * If the path exists checksums are compared and the asset is copied only
-     * if there is a mismatch. Checksum is stored in a separate asset with the
-     * name that consists of the original name and a suffix that depends on the
-     * checksum algorithm (e.g. MD5). Checksum files are copied along with the
-     * corresponding asset files.
-     *
-     * @param Context application context
-     * @return path to the root of resources directory on external storage
-     * @throws IOException if an I/O error occurs or "assets.lst" is missing
-     */
-    public static File syncAssets(Context context) throws IOException {
-        AssetManager assets = context.getAssets();
-        Reader reader = new InputStreamReader(assets.open(ASSET_LIST_NAME));
-        BufferedReader br = new BufferedReader(reader);
-        File appDir = getApplicationDir(context);
-        Set<String> assetPaths = new HashSet<String>();
-        String path;
-
-        while (null != (path = br.readLine())) {
-            File extFile = new File(appDir, path);
-            String md5Path = path + ".md5";
-            File extHash = new File(appDir, md5Path);
-            extFile.getParentFile().mkdirs();
-            assetPaths.add(extFile.getPath());
-
-            try {
-                // Read asset hash.
-                reader = new InputStreamReader(assets.open(md5Path));
-                String hash = new BufferedReader(reader).readLine();
-                // Read file hash and compare.
-                reader = new InputStreamReader(new FileInputStream(extHash));
-                if (hash.equals(new BufferedReader(reader).readLine())) {
-                    Log.i(TAG, "skip " + path + ", checksums match");
-                    continue;
-                }
-            } catch (IOException e) {
-            }
-
-            Log.i(TAG, "copy " + path + " to " + extFile);
-            copyStream(assets.open(path), new FileOutputStream(extFile));
-            InputStream hashStream = assets.open(md5Path);
-            copyStream(hashStream, new FileOutputStream(extHash));
-        }
-
-        removeUnusedAssets(new File(appDir, ASSET_LIST_NAME), assetPaths);
-
-        return appDir;
-    }
-
-    /**
-     * Copies application asset files to external storage. Recursively copies
-     * asset files to a directory located on external storage and unique for
-     * application. If a file already exists it will be overwritten.
-     *
-     * <p>In general this method should not be used to
-     * synchronize application resources and is only provided for compatibility
-     * with projects without "smart" asset setup. If you are looking for quick
-     * and "smart" synchronization that does not overwrite existing files use
-     * {@link #syncAssets(Context, String)}.
+     * Creates new instance.
      *
      * @param context application context
-     * @param path    relative path to asset file or directory
-     * @return path to the root of resources directory on external storage
      *
-     * @see #syncAssets
-     */
-    public static File copyAssets(Context context, String path)
-        throws IOException
-    {
-        File appDir = getApplicationDir(context);
-        File externalFile = new File(appDir, path);
-        AssetManager assets = context.getAssets();
-        String[] content = assets.list(path);
-        Set<String> assetPaths = new HashSet<String>();
-
-        if (content.length > 0) {
-            for (String item : content)
-                copyAssets(context, new File(path, item).getPath());
-        } else {
-            Log.i(TAG, "copy " + path + " to " + externalFile);
-            externalFile.getParentFile().mkdirs();
-            copyStream(assets.open(path), new FileOutputStream(externalFile));
-            assetPaths.add(externalFile.getPath());
-        }
-
-        removeUnusedAssets(new File(appDir, ASSET_LIST_NAME), assetPaths);
-
-        return externalFile;
-    }
-
-    private static void removeUnusedAssets(File assetsListFile,
-                                           Set<String> usedAssets)
-        throws IOException
-    {
-        try {
-            InputStream istream = new FileInputStream(assetsListFile);
-            Reader reader = new InputStreamReader(istream);
-            BufferedReader br = new BufferedReader(reader);
-            Set<String> unusedAssets = new HashSet<String>();
-            String line;
-
-            while (null != (line = br.readLine()))
-                unusedAssets.add(line);
-
-            unusedAssets.removeAll(usedAssets);
-            for (String path : unusedAssets) {
-                if (new File(path).delete()) // Skip missing files.
-                    Log.i(TAG, "delete unused asset " + path);
-
-                new File(path + ".md5").delete();
-            }
-
-            istream.close();
-        } catch (FileNotFoundException e) {
-            Log.i(TAG, assetsListFile +
-                       " does not exist, unused assets are not removed");
-        }
-
-        OutputStream ostream = new FileOutputStream(assetsListFile);
-        PrintStream ps = new PrintStream(ostream);
-        for (String path : usedAssets)
-            ps.println(path);
-        ps.close();
-    }
-
-    /**
-     * Returns external files directory for the application. Returns path to
-     * directory on external storage which is guaranteed to be unique for the
-     * running application.
-     *
-     * @param content application context
-     * @return path to application directory or null if it does not exists
      * @throws IOException if the directory does not exist
      *
      * @see android.content.Context#getExternalFilesDir
      * @see android.os.Environment#getExternalStorageState
      */
-    public static File getApplicationDir(Context context) throws IOException {
-        File dir = context.getExternalFilesDir(null);
-        if (null == dir)
+    public Assets(Context context) throws IOException {
+        assetManager = context.getAssets();
+        applicationDir = context.getExternalFilesDir(null);
+        if (null == applicationDir)
             throw new IOException("cannot get external files dir, " +
-                                  "external storage state is " +
-                                  getExternalStorageState());
-        return dir;
+                    "external storage state is " +
+                    getExternalStorageState());
     }
 
     /**
-     * Copies raw asset resources to external storage of the device. Copies
-     * raw asset resources to external storage of the device. Implementation
-     * is borrowed from Apache Commons.
+     * Returns application directory on the external storage. The directory is
+     * guaranteed to be unique for the given application.
      *
-     * @param source source stream
-     * @param dest   destination stream
+     * @return path to application directory or null if it does not exists
+     */
+    public File getApplicationDir() {
+        return applicationDir;
+    }
+
+    /**
+     * Returns the map of asset paths to the files checksums. There must be
+     * special file {@value #ASSET_LIST_NAME} among the application assets
+     * containing relative paths of assets to synchronize. If the corresponding
+     * path does not exist on the external storage it is copied. If the path
+     * exists checksums are compared and the asset is copied only if there is a
+     * mismatch. Checksum is stored in a separate asset with the name that
+     * consists of the original name and a suffix that depends on the checksum
+     * algorithm (e.g. MD5). Checksum files are copied along with the
+     * corresponding asset files.
+     *
+     * @return path to the root of resources directory on external storage
+     * @throws IOException if an I/O error occurs or "assets.lst" is missing
+     */
+    public Map<String, String> getItems() throws IOException {
+        Map<String, String> items = new HashMap<String, String>();
+        for (String path : readLines(assetManager.open(ASSET_LIST_NAME))) {
+            String hashPath = path + HASH_EXT;
+            Reader reader = new InputStreamReader(assetManager.open(hashPath));
+            items.put(path, new BufferedReader(reader).readLine());
+        }
+        return items;
+    }
+
+    /**
+     * Returns path to hash mappings for the previously copied files. This
+     * method can asdf asdf asdf asdf asdf sdfbe used to find out those new
+     * assets that require to be
+     */
+    public Map<String, String> getExternalItems() {
+        try {
+            Map<String, String> items = new HashMap<String, String>();
+            File assetFile = new File(applicationDir, ASSET_LIST_NAME);
+            for (String line : readLines(new FileInputStream(assetFile))) {
+                String[] fields = line.split(" ");
+                items.put(fields[0], fields[1]);
+            }
+            return items;
+        } catch (IOException e) {
+            return Collections.emptyMap();
+        }
+    }
+
+    /**
+     * Copies application asset files to external storage. files to a directory
+     * located on external storage and unique for application. If a file
+     * already exists it will be overwritten.
+     *
+     * <p>
+     * In general this method should not be used to synchronize application
+     * resources and is only provided for compatibility with projects without
+     * "smart" asset setup. If you are looking for quick and "smart"
+     * synchronization that does not overwrite existing files use
+     * {@link #syncAssets(String)}.
+     *
+     * @param path relative path to asset file or directory
+     * @return path to the root of resources directory on external storage
+     *
+     * @see #syncAssets
+     */
+    public Collection<String> getItemsToCopy(String path) throws IOException {
+        Collection<String> items = new ArrayList<String>();
+        Queue<String> queue = new ArrayDeque<String>();
+        queue.offer(path);
+
+        while (!queue.isEmpty()) {
+            path = queue.poll();
+            String[] list = assetManager.list(path);
+            for (String nested : list)
+                queue.offer(nested);
+
+            if (list.length == 0)
+                items.add(path);
+        }
+
+        return items;
+    }
+
+    private List<String> readLines(InputStream source) throws IOException {
+        List<String> lines = new ArrayList<String>();
+        BufferedReader br = new BufferedReader(new InputStreamReader(source));
+        String line;
+        while (null != (line = br.readLine()))
+            lines.add(line);
+        return lines;
+    }
+
+    /**
+     * Persists the list of item paths in the external storage. The list is
+     * stored as a two-column space-separated list of items.
+     *
+     * @param items the items
      * @throws IOException if an I/O error occurs
      */
-    private static void copyStream(InputStream source, OutputStream dest)
-        throws IOException
+    public void writeItemList(Map<String, String> items)
+            throws IOException
     {
+        File assetListFile = new File(applicationDir, ASSET_LIST_NAME);
+        PrintWriter pw = new PrintWriter(new FileOutputStream(assetListFile));
+        for (Map.Entry<String, String> entry : items.entrySet())
+            pw.format("%s %s\n", entry.getKey(), entry.getValue());
+        if (pw.checkError())
+            throw new IOException("PrintWriter write error");
+    }
+
+    /**
+     * Copies raw asset resource to external storage of the device.
+     * Implementation is borrowed from Apache Commons.
+     *
+     * @param path path of the asset to copy
+     * @throws IOException if an I/O error occurs
+     */
+    public File copy(String path) throws IOException {
+        InputStream source = assetManager.open(path);
+        File destinationFile = new File(applicationDir, path);
+        destinationFile.getParentFile().mkdirs();
+        OutputStream destination = new FileOutputStream(destinationFile);
         byte[] buffer = new byte[1024];
         int nread;
 
@@ -195,13 +176,12 @@ public class Assets {
                 nread = source.read();
                 if (nread < 0)
                     break;
-
-                dest.write(nread);
+                destination.write(nread);
                 continue;
             }
-
-            dest.write(buffer, 0, nread);
+            destination.write(buffer, 0, nread);
         }
+        return destinationFile;
     }
 }
 
