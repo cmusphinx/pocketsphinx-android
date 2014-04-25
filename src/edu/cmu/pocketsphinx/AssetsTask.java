@@ -36,7 +36,7 @@ public class AssetsTask extends AsyncTask<Void, File, Object> {
             Map<String, String> externalItems = assets.getExternalItems();
             for (String path : items.keySet()) {
                 if (!items.get(path).equals(externalItems.get(path)) ||
-                    !(new File(assets.getApplicationDir(), path).exists()))
+                    !(new File(assets.getExternalDir(), path).exists()))
                     newItems.add(path);
                 else
                     Log.i(TAG, format("skip asset %s: equal checksums", path));
@@ -69,15 +69,15 @@ public class AssetsTask extends AsyncTask<Void, File, Object> {
             }
 
             for (String path : unusedItems) {
-                File file = new File(assets.getApplicationDir(), path);
+                File file = new File(assets.getExternalDir(), path);
                 file.delete();
                 Log.i(TAG, format("remove asset %s", file));
                 if (isCancelled())
                     return null;
             }
 
-            assets.writeItemList(items);
-            return assets.getApplicationDir();
+            assets.updateItemList(items);
+            return assets.getExternalDir();
         } catch (IOException e) {
             // Have AsyncTask to execute onCancel on behalf of the UI thread.
             cancel(false);
@@ -92,8 +92,8 @@ public class AssetsTask extends AsyncTask<Void, File, Object> {
     }
 
     @Override
-    protected void onPostExecute(Object applicationDirectory) {
-        callback.onTaskComplete((File) applicationDirectory);
+    protected void onPostExecute(Object externalDir) {
+        callback.onTaskComplete((File) externalDir);
     }
 
     @Override

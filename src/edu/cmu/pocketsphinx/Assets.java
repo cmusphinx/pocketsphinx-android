@@ -16,11 +16,12 @@ import android.content.res.AssetManager;
  */
 public class Assets {
 
-    private static final String ASSET_LIST_NAME = "assets.lst";
-    private static final String HASH_EXT = ".md5";
+    public static final String ASSET_LIST_NAME = "assets.lst";
+    public static final String SYNC_DIR = "sync";
+    public static final String HASH_EXT = ".md5";
 
     private final AssetManager assetManager;
-    private final File applicationDir;
+    private final File externalDir;
 
     /**
      * Creates new instance.
@@ -33,22 +34,22 @@ public class Assets {
      * @see android.os.Environment#getExternalStorageState
      */
     public Assets(Context context) throws IOException {
-        assetManager = context.getAssets();
-        applicationDir = context.getExternalFilesDir(null);
-        if (null == applicationDir)
+        File appDir = context.getExternalFilesDir(null);
+        if (null == appDir)
             throw new IOException("cannot get external files dir, " +
-                    "external storage state is " +
-                    getExternalStorageState());
+                                  "external storage state is " +
+                                  getExternalStorageState());
+        externalDir = new File(appDir, SYNC_DIR);
+        assetManager = context.getAssets();
     }
 
     /**
-     * Returns application directory on the external storage. The directory is
-     * guaranteed to be unique for the given application.
+     * Returns destination path on external storage where assets are copied.
      *
      * @return path to application directory or null if it does not exists
      */
-    public File getApplicationDir() {
-        return applicationDir;
+    public File getExternalDir() {
+        return externalDir;
     }
 
     /**
@@ -67,9 +68,8 @@ public class Assets {
      */
     public Map<String, String> getItems() throws IOException {
         Map<String, String> items = new HashMap<String, String>();
-        for (String path : readLines(assetManager.open(ASSET_LIST_NAME))) {
-            String hashPath = path + HASH_EXT;
-            Reader reader = new InputStreamReader(assetManager.open(hashPath));
+        for (String path : readLines(openAsset(ASSET_LIST_NAME))) {
+            Reader reader = new InputStreamReader(openAsset(path + HASH_EXT));
             items.put(path, new BufferedReader(reader).readLine());
         }
         return items;
@@ -83,7 +83,7 @@ public class Assets {
     public Map<String, String> getExternalItems() {
         try {
             Map<String, String> items = new HashMap<String, String>();
-            File assetFile = new File(applicationDir, ASSET_LIST_NAME);
+            File assetFile = new File(externalDir, ASSET_LIST_NAME);
             for (String line : readLines(new FileInputStream(assetFile))) {
                 String[] fields = line.split(" ");
                 items.put(fields[0], fields[1]);
@@ -138,17 +138,23 @@ public class Assets {
         return lines;
     }
 
+    private InputStream openAsset(String asset) throws IOException {
+        return assetManager.open(new File(SYNC_DIR, asset).getPath());
+    }
+
     /**
-     * Persists the list of item paths in the external storage. The list is
-     * stored as a two-column space-separated list of items.
+     * Persists the list of synchronized items. The list is stored as a
+     * two-column space-separated list of items in a text file. The file is
+     * located at the root of synchronization directory in the external
+     * storage.
      *
      * @param items the items
      * @throws IOException if an I/O error occurs
      */
-    public void writeItemList(Map<String, String> items)
+    public void updateItemList(Map<String, String> items)
             throws IOException
     {
-        File assetListFile = new File(applicationDir, ASSET_LIST_NAME);
+        File assetListFile = new File(externalDir, ASSET_LIST_NAME);
         PrintWriter pw = new PrintWriter(new FileOutputStream(assetListFile));
         for (Map.Entry<String, String> entry : items.entrySet())
             pw.format("%s %s\n", entry.getKey(), entry.getValue());
@@ -163,9 +169,9 @@ public class Assets {
      * @param path path of the asset to copy
      * @throws IOException if an I/O error occurs
      */
-    public File copy(String path) throws IOException {
-        InputStream source = assetManager.open(path);
-        File destinationFile = new File(applicationDir, path);
+    public File copy(String asset) throws IOException {
+        InputStream source = openAsset(asset);
+        File destinationFile = new File(externalDir, asset);
         destinationFile.getParentFile().mkdirs();
         OutputStream destination = new FileOutputStream(destinationFile);
         byte[] buffer = new byte[1024];
