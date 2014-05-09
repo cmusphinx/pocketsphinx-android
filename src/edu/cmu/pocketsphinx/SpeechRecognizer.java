@@ -157,8 +157,18 @@ public class SpeechRecognizer {
      * @param name search name
      * @param phrase search phrase
      */
-    public void addKeywordSearch(String name, String phrase) {
-        decoder.setKws(name, phrase);
+    public void addKeyphraseSearch(String name, String phrase) {
+        decoder.setKeyphrase(name, phrase);
+    }
+
+    /**
+     * Adds search based on a keyphrase file.
+     *
+     * @param name search name
+     * @param phrase search phrase
+     */
+    public void addKeywordSearch(String name, File file) {
+        decoder.setKws(name, file.getPath());
     }
 
     private final class RecognizerThread extends Thread {
