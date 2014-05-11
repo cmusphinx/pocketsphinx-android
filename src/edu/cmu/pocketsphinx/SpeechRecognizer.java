@@ -212,8 +212,7 @@ public class SpeechRecognizer {
             // Remove all pending notifications.
             mainHandler.removeCallbacksAndMessages(null);
             final Hypothesis hypothesis = decoder.hyp();
-            if (null != hypothesis)
-                mainHandler.post(new ResultEvent(hypothesis, true));
+            mainHandler.post(new ResultEvent(hypothesis, true));
         }
     }
 
