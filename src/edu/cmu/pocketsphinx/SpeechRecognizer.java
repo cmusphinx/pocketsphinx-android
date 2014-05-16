@@ -129,9 +129,11 @@ public class SpeechRecognizer {
      */
     public boolean stop() {
         boolean result = stopRecognizerThread();
-        if (result)
+        if (result) {
             Log.i(TAG, "Stop recognition");
-
+            final Hypothesis hypothesis = decoder.hyp();
+            mainHandler.post(new ResultEvent(hypothesis, true));
+        }
         return result;
     }
 
@@ -145,7 +147,6 @@ public class SpeechRecognizer {
         boolean result = stopRecognizerThread();
         if (result) {
             Log.i(TAG, "Cancel recognition");
-            mainHandler.removeCallbacksAndMessages(null);
         }
 
         return result;
@@ -254,8 +255,6 @@ public class SpeechRecognizer {
 
             // Remove all pending notifications.
             mainHandler.removeCallbacksAndMessages(null);
-            final Hypothesis hypothesis = decoder.hyp();
-            mainHandler.post(new ResultEvent(hypothesis, true));
         }
     }
 
