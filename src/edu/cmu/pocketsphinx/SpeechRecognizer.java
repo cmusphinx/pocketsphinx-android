@@ -1,3 +1,33 @@
+/* ====================================================================
+ * Copyright (c) 2014 Alpha Cephei Inc.  All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in
+ *    the documentation and/or other materials provided with the
+ *    distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY ALPHA CEPHEI INC. ``AS IS'' AND
+ * ANY EXPRESSED OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+ * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL CARNEGIE MELLON UNIVERSITY
+ * NOR ITS EMPLOYEES BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
+ * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
+ * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+ * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+ * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ * ====================================================================
+ */
+
 package edu.cmu.pocketsphinx;
 
 import static java.lang.String.format;
@@ -13,7 +43,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-
+/**
+ * Main class to access recognizer functions. After configuration this class
+ * starts a listener thread which records the data and recognizes it using
+ * Pocketsphinx engine. Recognition events are passed to a client using
+ * {@link RecognitionListener}
+ * 
+ */
 public class SpeechRecognizer {
 
     protected static final String TAG = SpeechRecognizer.class.getSimpleName();
@@ -24,8 +60,7 @@ public class SpeechRecognizer {
 
     private Thread recognizerThread;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private final Collection<RecognitionListener> listeners =
-        new HashSet<RecognitionListener>();
+    private final Collection<RecognitionListener> listeners = new HashSet<RecognitionListener>();
 
     private final int sampleRate;
 
@@ -56,7 +91,7 @@ public class SpeechRecognizer {
 
     /**
      * Starts recognition. Does nothing if recognition is active.
-     *
+     * 
      * @return true if recognition was actually started
      */
     public boolean startListening(String searchName) {
@@ -89,7 +124,7 @@ public class SpeechRecognizer {
     /**
      * Stops recognition. All listeners should receive final result if there is
      * any. Does nothing if recognition is not active.
-     *
+     * 
      * @return true if recognition was actually stopped
      */
     public boolean stop() {
@@ -101,9 +136,9 @@ public class SpeechRecognizer {
     }
 
     /**
-     * Cancels recogition. Listeners do not recevie final result. Does nothing
+     * Cancels recognition. Listeners do not receive final result. Does nothing
      * if recognition is not active.
-     *
+     * 
      * @return true if recognition was actually canceled
      */
     public boolean cancel() {
@@ -118,7 +153,7 @@ public class SpeechRecognizer {
 
     /**
      * Gets name of the currently active search.
-     *
+     * 
      * @return active search name or null if no search was started
      */
     public String getSearchName() {
@@ -131,9 +166,11 @@ public class SpeechRecognizer {
 
     /**
      * Adds searches based on JSpeech grammar.
-     *
-     * @param name search name
-     * @param file JSGF file
+     * 
+     * @param name
+     *            search name
+     * @param file
+     *            JSGF file
      */
     public void addGrammarSearch(String name, File file) {
         Log.i(TAG, format("Load JSGF %s", file));
@@ -142,9 +179,11 @@ public class SpeechRecognizer {
 
     /**
      * Adds search based on N-gram language model.
-     *
-     * @param name search name
-     * @param file N-gram model file
+     * 
+     * @param name
+     *            search name
+     * @param file
+     *            N-gram model file
      */
     public void addNgramSearch(String name, File file) {
         Log.i(TAG, format("Load N-gram model %s", file));
@@ -153,9 +192,11 @@ public class SpeechRecognizer {
 
     /**
      * Adds search based on a single phrase.
-     *
-     * @param name search name
-     * @param phrase search phrase
+     * 
+     * @param name
+     *            search name
+     * @param phrase
+     *            search phrase
      */
     public void addKeyphraseSearch(String name, String phrase) {
         decoder.setKeyphrase(name, phrase);
@@ -163,22 +204,24 @@ public class SpeechRecognizer {
 
     /**
      * Adds search based on a keyphrase file.
-     *
-     * @param name search name
-     * @param phrase search phrase
+     * 
+     * @param name
+     *            search name
+     * @param phrase
+     *            search phrase
      */
     public void addKeywordSearch(String name, File file) {
         decoder.setKws(name, file.getPath());
     }
 
     private final class RecognizerThread extends Thread {
-        @Override public void run() {
-            AudioRecord recorder =
-                new AudioRecord(AudioSource.VOICE_RECOGNITION,
-                                sampleRate,
-                                AudioFormat.CHANNEL_IN_MONO,
-                                AudioFormat.ENCODING_PCM_16BIT,
-                                8192); // TODO:calculate properly
+        @Override
+        public void run() {
+            AudioRecord recorder = new AudioRecord(
+                    AudioSource.VOICE_RECOGNITION, sampleRate,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT, 8192); // TODO:calculate
+                                                           // properly
             decoder.startUtt(null);
             recorder.startRecording();
             short[] buffer = new short[BUFFER_SIZE];
@@ -233,7 +276,8 @@ public class SpeechRecognizer {
             this.state = state;
         }
 
-        @Override protected void execute(RecognitionListener listener) {
+        @Override
+        protected void execute(RecognitionListener listener) {
             if (state)
                 listener.onBeginningOfSpeech();
             else
@@ -250,7 +294,8 @@ public class SpeechRecognizer {
             this.finalResult = finalResult;
         }
 
-        @Override protected void execute(RecognitionListener listener) {
+        @Override
+        protected void execute(RecognitionListener listener) {
             if (finalResult)
                 listener.onResult(hypothesis);
             else
@@ -258,5 +303,3 @@ public class SpeechRecognizer {
         }
     }
 }
-
-/* vim: set ts=4 sw=4: */
