@@ -226,7 +226,7 @@ public class SpeechRecognizer {
             decoder.startUtt(null);
             recorder.startRecording();
             short[] buffer = new short[BUFFER_SIZE];
-            boolean vadState = decoder.getVadState();
+            boolean inSpeech = decoder.getInSpeech();
 
             while (!interrupted()) {
                 int nread = recorder.read(buffer, 0, buffer.length);
@@ -236,9 +236,9 @@ public class SpeechRecognizer {
                 } else if (nread > 0) {
                     decoder.processRaw(buffer, nread, false, false);
 
-                    if (decoder.getVadState() != vadState) {
-                        vadState = decoder.getVadState();
-                        mainHandler.post(new VadStateChangeEvent(vadState));
+                    if (decoder.getInSpeech() != inSpeech) {
+                        inSpeech = decoder.getInSpeech();
+                        mainHandler.post(new InSpeechChangeEvent(inSpeech));
                     }
 
                     final Hypothesis hypothesis = decoder.hyp();
@@ -268,10 +268,10 @@ public class SpeechRecognizer {
         protected abstract void execute(RecognitionListener listener);
     }
 
-    private class VadStateChangeEvent extends RecognitionEvent {
+    private class InSpeechChangeEvent extends RecognitionEvent {
         private final boolean state;
 
-        VadStateChangeEvent(boolean state) {
+        InSpeechChangeEvent(boolean state) {
             this.state = state;
         }
 
