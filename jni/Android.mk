@@ -125,6 +125,7 @@ LOCAL_MODULE := pocketsphinx
 
 LOCAL_SRC_FILES := \
   acmod.c     \
+  allphone_search.c \
   bin_mdef.c    \
   blkarray_list.c   \
   dict.c     \
