@@ -242,8 +242,7 @@ public class SpeechRecognizer {
                     }
 
                     final Hypothesis hypothesis = decoder.hyp();
-                    if (null != hypothesis)
-                        mainHandler.post(new ResultEvent(hypothesis, false));
+                    mainHandler.post(new ResultEvent(hypothesis, false));
                 }
             }
 
