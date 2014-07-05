@@ -103,7 +103,7 @@ public class SpeechRecognizerSetup {
         return this;
     }
 
-    public SpeechRecognizerSetup setFloat(String key, float value) {
+    public SpeechRecognizerSetup setFloat(String key, double value) {
         config.setFloat(key, value);
         return this;
     }
