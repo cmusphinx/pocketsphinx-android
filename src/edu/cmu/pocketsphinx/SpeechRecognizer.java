@@ -105,6 +105,25 @@ public class SpeechRecognizer {
         return true;
     }
 
+    /**
+     * Starts recognition. After specified timeout listening stops and the
+     * endOfSpeech signals about that. Does nothing if recognition is active.
+     * 
+     * @timeout - timeout in seconds to listen.
+     * 
+     * @return true if recognition was actually started
+     */
+    public boolean startListening(String searchName, int timeout) {
+        if (null != recognizerThread)
+            return false;
+
+        Log.i(TAG, format("Start recognition \"%s\"", searchName));
+        decoder.setSearch(searchName);
+        recognizerThread = new RecognizerThread(timeout);
+        recognizerThread.start();
+        return true;
+    }
+
     private boolean stopRecognizerThread() {
         if (null == recognizerThread)
             return false;
@@ -216,6 +235,20 @@ public class SpeechRecognizer {
     }
 
     private final class RecognizerThread extends Thread {
+
+        private int timeout;
+        private final static int NO_TIMEOUT = -1;
+
+        public RecognizerThread(int timeout) {
+            this.timeout = timeout * 2 * sampleRate / BUFFER_SIZE; // We will
+                                                                   // count
+                                                                   // buffers
+        }
+
+        public RecognizerThread() {
+            timeout = NO_TIMEOUT;
+        }
+
         @Override
         public void run() {
             AudioRecord recorder = new AudioRecord(
@@ -228,7 +261,7 @@ public class SpeechRecognizer {
             short[] buffer = new short[BUFFER_SIZE];
             boolean inSpeech = decoder.getInSpeech();
 
-            while (!interrupted()) {
+            while (!interrupted() && timeout != 0) {
                 int nread = recorder.read(buffer, 0, buffer.length);
 
                 if (-1 == nread) {
@@ -244,6 +277,10 @@ public class SpeechRecognizer {
                     final Hypothesis hypothesis = decoder.hyp();
                     mainHandler.post(new ResultEvent(hypothesis, false));
                 }
+
+                if (timeout > 0) {
+                    timeout--;
+                }
             }
 
             recorder.stop();
@@ -254,6 +291,11 @@ public class SpeechRecognizer {
 
             // Remove all pending notifications.
             mainHandler.removeCallbacksAndMessages(null);
+
+            // If we met timeout signal that speech ended
+            if (timeout == 0) {
+                mainHandler.post(new InSpeechChangeEvent(false));
+            }
         }
     }
 
