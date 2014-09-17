@@ -66,7 +66,7 @@ public class Assets {
     private final File externalDir;
 
     /**
-     * Creates new instance.
+     * Creates new instance for asset syncronization
      * 
      * @param context
      *            application context
@@ -83,6 +83,19 @@ public class Assets {
             throw new IOException("cannot get external files dir, "
                     + "external storage state is " + getExternalStorageState());
         externalDir = new File(appDir, SYNC_DIR);
+        assetManager = context.getAssets();
+    }
+
+    /**
+     * Creates new instance with specified destination for assets
+     * 
+     * @param context
+     *            application context to retrieve the assets
+     * @param path
+     *            path to sync the files
+     */ 
+    public Assets(Context context, String dest) {
+        externalDir = new File(dest);
         assetManager = context.getAssets();
     }
 
