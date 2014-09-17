@@ -4,8 +4,8 @@
 
   <property file="build.properties"/>
 
-  <property name="build.vsn" value="0.8"/>
-  <property name="build.name" value="${ant.project.name}-${build.vsn}"/>
+  <property name="build.version" value="5prealpha"/>
+  <property name="build.name" value="${ant.project.name}-${build.version}"/>
   <property name="build.njobs" value="1" />
 
   <target name="clean">
@@ -27,7 +27,7 @@
       deprecation="true"
       destdir="build/classes"
       includeAntRuntime="false"
-      classpath="${sdk.dir}/platforms/android-${sdk.vsn}/android.jar">
+      classpath="${sdk.dir}/platforms/android-${sdk.version}/android.jar">
       <compilerarg value="-Xlint:-options"/>
       <src path="gen"/>
       <src path="src"/>
@@ -73,14 +73,5 @@
       basedir="build/classes"
       destfile="build/${build.name}-nolib.jar"/>
 
-    <copy
-      file="build/${build.name}-nolib.jar"
-      tofile="build/${build.name}.jar"/>
-
-    <jar
-      update="true"
-      destfile="build/${build.name}.jar">
-      <fileset dir="." includes="lib/**"/>
-    </jar>
   </target>
 </project>

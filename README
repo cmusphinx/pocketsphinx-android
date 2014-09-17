@@ -1,30 +1,67 @@
-Building
-========
+About
+=====
+
+This project is a wrapper for Pocketsphinx for Android providing
+high-level interface for recognizing the microphone input.
+
+Build
+=====
+
 You will need SWIG, Apache Ant and Android NDK to build a distributable
 archive of pocketsphinx for Android.
 
-Make sure this directory is in the same parent directory as sphinxbase and
-pocketsphinx are. You can download them from http://cmusphinx.sourceforge.net/.
+You need to checkout sphinxbase, pocketsphinx and pocketsphinx-android
+and put them in the same folder.
 
-Create 'build.properties' in the project root and define the following
+Root folder
+ \_pocketsphinx
+ \_sphinxbase
+ \_pocketsphinx-android
+
+Older versions might be incompatible with the latest pocketsphinx-android,
+so you need to make sure you are using latest versions. You can use
+the following command to checkout from repository:
+
+svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/sphinxbase
+svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx
+svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx-android
+
+After arragement of the files you need to update the file
+'build.properties' in the project root and define the following
 properties:
 
   * sdk.dir - path to Android SDK
-  * sdk.vsn - Android API version
   * ndk.dir - path to Android NDK
+  * sdk.version - Android API version
 
-Run `ant jar`. If everything is setup right, you will get two jar archieves -
-regular and "nolib" versions. The "nolib" version contains only compiled
-wrapper classes, while regular version also includes shared library.
+For example:
 
-Using with Eclipse ADT plugin
-=============================
-Due to a bug in ADT plugin it is not possible to use regular version. This is
-why "nolib" version exists. Put it into 'libs' directory of your project. You
-will also need to copy shared library from 'lib/armeabi' to 'libs/armeabi'
-directory of your project.
+sdk.dir=/home/user/local/adt-bundle-linux-x86_64-20140321/sdk
+ndk.dir=/home/user/local/android-ndk-r9d
+sdk.version=19
 
-Using in Android Studio or from command-line
-============================================
-Simply put regular version of the jar library into 'libs' directory of your
-project.
+After everything is set, run `ant jar`. It will create two jar archieves
+- regular and "nolib" versions. The "nolib" version contains only
+compiled wrapper classes, while regular version also includes shared
+library.
+
+Using the library
+=================
+
+Library is distributed as architecture-independent
+pocketsphinx-android-0.8-nolib.jar and binary .so files for different
+hardware architectures. Due to a bug in ADT plugin it is currently
+impossible to include pocketsphinx-android as a single jar.
+
+You will have to use "-nolib" version of the library and add shared
+libraries manually. For example, if you are building application for ARM
+architecture on Eclipse, you will have to include
+"libs/pocketsphinx-android-0.8-nolib.jar" and
+"libs/armeabi/libpocketsphinx_jni.so" into your project. In Android
+Studio you need to place jar file in app/libs folder and jni .so files
+into app/src/main/jniLibs folder.
+
+For further information on usage please see the wiki page:
+
+http://cmusphinx.sourceforge.net/wiki/tutorialandroid
+
