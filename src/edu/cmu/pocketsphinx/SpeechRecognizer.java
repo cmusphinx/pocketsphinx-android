@@ -33,6 +33,7 @@ package edu.cmu.pocketsphinx;
 import static java.lang.String.format;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 
@@ -253,13 +254,28 @@ public class SpeechRecognizer {
 
         @Override
         public void run() {
-            AudioRecord recorder = new AudioRecord(
-                    AudioSource.VOICE_RECOGNITION, sampleRate,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT, bufferSize * 2);
 
-            decoder.startUtt(null);
+            AudioRecord recorder = new AudioRecord(AudioSource.VOICE_RECOGNITION, sampleRate,
+	                AudioFormat.CHANNEL_IN_MONO,
+	                AudioFormat.ENCODING_PCM_16BIT, bufferSize * 2);          		    
+	    if (recorder.getState() == AudioRecord.STATE_UNINITIALIZED) {
+	        recorder.release();
+		IOException ioe = new IOException("Failed to initialize recorder. Microphone might be already in use.");
+		mainHandler.post(new OnErrorEvent(ioe));
+		return;
+	    }
             recorder.startRecording();
+            if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_STOPPED) {
+                recorder.stop();
+                recorder.release();
+                IOException ioe = new IOException("Failed to start recording. Microphone might be already in use.");
+                mainHandler.post(new OnErrorEvent(ioe));
+                return;
+    	    }
+            
+            Log.d(TAG, "Starting decoding");
+
+            decoder.startUtt(null);            
             short[] buffer = new short[bufferSize];
             boolean inSpeech = decoder.getInSpeech();
 
@@ -343,6 +359,19 @@ public class SpeechRecognizer {
                 listener.onResult(hypothesis);
             else
                 listener.onPartialResult(hypothesis);
+        }
+    }
+    
+    private class OnErrorEvent extends RecognitionEvent {
+        private final Exception exception;
+
+        OnErrorEvent(Exception exception) {
+            this.exception = exception;
+        }
+
+        @Override
+        protected void execute(RecognitionListener listener) {
+            listener.onError(exception);
         }
     }
 }

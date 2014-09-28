@@ -54,4 +54,9 @@ public interface RecognitionListener {
      * Called after the recognition is ended.
      */
     public void onResult(Hypothesis hypothesis);
+    
+    /**
+     * Called when an error occurs.
+     */
+    public void onError(Exception exception);
 }
