@@ -239,7 +239,7 @@ public class SpeechRecognizer {
         private int remainingSamples;
         private int timeoutSamples;
         private final static int NO_TIMEOUT = -1;
-        private final static float BUFFER_SIZE_SECONDS = 0.2f;
+        private final static float BUFFER_SIZE_SECONDS = 0.4f;
 
         public RecognizerThread(int timeout) {
             this.bufferSize = Math.round(sampleRate * BUFFER_SIZE_SECONDS);
