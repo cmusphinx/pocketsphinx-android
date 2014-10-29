@@ -59,4 +59,9 @@ public interface RecognitionListener {
      * Called when an error occurs.
      */
     public void onError(Exception exception);
+    
+    /**
+     * Called after timeout expired
+     */
+    public void onTimeout();
 }

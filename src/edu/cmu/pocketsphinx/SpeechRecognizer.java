@@ -56,17 +56,11 @@ public class SpeechRecognizer {
     protected static final String TAG = SpeechRecognizer.class.getSimpleName();
 
     private final Decoder decoder;
-
     private Thread recognizerThread;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Collection<RecognitionListener> listeners = new HashSet<RecognitionListener>();
 
-    private final int sampleRate;
-
     protected SpeechRecognizer(Config config) {
-        sampleRate = (int) config.getFloat("-samprate");
-        if (config.getFloat("-samprate") != sampleRate)
-            throw new IllegalArgumentException("sampling rate must be integer");
         decoder = new Decoder(config);
     }
 
@@ -234,7 +228,8 @@ public class SpeechRecognizer {
     }
 
     private final class RecognizerThread extends Thread {
-
+        
+        private int sampleRate;
         private int bufferSize;
         private int remainingSamples;
         private int timeoutSamples;
@@ -242,44 +237,53 @@ public class SpeechRecognizer {
         private final static float BUFFER_SIZE_SECONDS = 0.4f;
 
         public RecognizerThread(int timeout) {
+            this.sampleRate = (int)decoder.getConfig().getFloat("-samprate");
             this.bufferSize = Math.round(sampleRate * BUFFER_SIZE_SECONDS);
-            this.timeoutSamples = timeout * sampleRate / 1000;
+            if (timeout != NO_TIMEOUT)
+                this.timeoutSamples = timeout * sampleRate / 1000;
+            else
+                this.timeoutSamples = NO_TIMEOUT;
             this.remainingSamples = this.timeoutSamples;
         }
 
         public RecognizerThread() {
-            this.bufferSize = Math.round(sampleRate * BUFFER_SIZE_SECONDS);
-            timeoutSamples = NO_TIMEOUT;
+            this(NO_TIMEOUT);
         }
 
         @Override
         public void run() {
 
-            AudioRecord recorder = new AudioRecord(AudioSource.VOICE_RECOGNITION, sampleRate,
-	                AudioFormat.CHANNEL_IN_MONO,
-	                AudioFormat.ENCODING_PCM_16BIT, bufferSize * 2);          		    
-	    if (recorder.getState() == AudioRecord.STATE_UNINITIALIZED) {
-	        recorder.release();
-		IOException ioe = new IOException("Failed to initialize recorder. Microphone might be already in use.");
-		mainHandler.post(new OnErrorEvent(ioe));
-		return;
-	    }
+            AudioRecord recorder = new AudioRecord(
+                    AudioSource.VOICE_RECOGNITION, sampleRate,
+                    AudioFormat.CHANNEL_IN_MONO,
+                    AudioFormat.ENCODING_PCM_16BIT, bufferSize * 2);
+
+            if (recorder.getState() == AudioRecord.STATE_UNINITIALIZED) {
+                recorder.release();
+                IOException ioe = new IOException(
+                        "Failed to initialize recorder. Microphone might be already in use.");
+                mainHandler.post(new OnErrorEvent(ioe));
+                return;
+            }
+
             recorder.startRecording();
             if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_STOPPED) {
                 recorder.stop();
                 recorder.release();
-                IOException ioe = new IOException("Failed to start recording. Microphone might be already in use.");
+                IOException ioe = new IOException(
+                        "Failed to start recording. Microphone might be already in use.");
                 mainHandler.post(new OnErrorEvent(ioe));
                 return;
-    	    }
-            
+            }
+
             Log.d(TAG, "Starting decoding");
 
-            decoder.startUtt(null);            
+            decoder.startUtt(null);
             short[] buffer = new short[bufferSize];
             boolean inSpeech = decoder.getInSpeech();
 
-            while (!interrupted() && ((timeoutSamples == NO_TIMEOUT) || (remainingSamples > 0))) {
+            while (!interrupted()
+                    && ((timeoutSamples == NO_TIMEOUT) || (remainingSamples > 0))) {
                 int nread = recorder.read(buffer, 0, buffer.length);
 
                 if (-1 == nread) {
@@ -287,11 +291,17 @@ public class SpeechRecognizer {
                 } else if (nread > 0) {
                     decoder.processRaw(buffer, nread, false, false);
 
+                    // int max = 0;
+                    // for (int i = 0; i < nread; i++) {
+                    //     max = Math.max(max, Math.abs(buffer[i]));
+                    // }
+                    // Log.e("!!!!!!!!", "Level: " + max);
+                    
                     if (decoder.getInSpeech() != inSpeech) {
                         inSpeech = decoder.getInSpeech();
                         mainHandler.post(new InSpeechChangeEvent(inSpeech));
                     }
-                    
+
                     if (inSpeech)
                         remainingSamples = timeoutSamples;
 
@@ -313,7 +323,7 @@ public class SpeechRecognizer {
 
             // If we met timeout signal that speech ended
             if (timeoutSamples != NO_TIMEOUT && remainingSamples <= 0) {
-                mainHandler.post(new InSpeechChangeEvent(false));
+                mainHandler.post(new TimeoutEvent());
             }
         }
     }
@@ -361,7 +371,7 @@ public class SpeechRecognizer {
                 listener.onPartialResult(hypothesis);
         }
     }
-    
+
     private class OnErrorEvent extends RecognitionEvent {
         private final Exception exception;
 
@@ -372,6 +382,13 @@ public class SpeechRecognizer {
         @Override
         protected void execute(RecognitionListener listener) {
             listener.onError(exception);
+        }
+    }
+
+    private class TimeoutEvent extends RecognitionEvent {
+        @Override
+        protected void execute(RecognitionListener listener) {
+            listener.onTimeout();
         }
     }
 }
