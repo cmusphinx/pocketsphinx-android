@@ -221,10 +221,27 @@ public class SpeechRecognizer {
      * @param name
      *            search name
      * @param phrase
-     *            search phrase
+     *            a file with search phrases, one phrase per line with optional weight in the end, for example
+     *            <br/>
+     *            <code>
+     *            oh mighty computer /1e-20/
+     *            how do you do /1e-10/
+     *            </code>
      */
     public void addKeywordSearch(String name, File file) {
         decoder.setKws(name, file.getPath());
+    }
+    
+    /**
+     * Adds a search to look for the phonemes
+     *
+     * @param name
+     *          search name
+     * @param phonetic bigram model
+     * 
+     */
+    public void addAllphoneSearch(String name, File file) {
+        decoder.setAllphoneFile(name, file.getPath());
     }
 
     private final class RecognizerThread extends Thread {

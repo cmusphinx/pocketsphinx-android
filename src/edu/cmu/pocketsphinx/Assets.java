@@ -29,14 +29,28 @@
  */
 package edu.cmu.pocketsphinx;
 
-import static android.os.Environment.getExternalStorageState;
-import static java.lang.String.format;
-
-import java.io.*;
-import java.util.*;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.io.PrintWriter;
+import java.io.Reader;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Queue;
 
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.os.Environment;
 import android.util.Log;
 
 /**
@@ -81,7 +95,7 @@ public class Assets {
         File appDir = context.getExternalFilesDir(null);
         if (null == appDir)
             throw new IOException("cannot get external files dir, "
-                    + "external storage state is " + getExternalStorageState());
+                    + "external storage state is " + Environment.getExternalStorageState());
         externalDir = new File(appDir, SYNC_DIR);
         assetManager = context.getAssets();
     }
@@ -244,7 +258,7 @@ public class Assets {
                 newItems.add(path);
             else
                 Log.i(TAG,
-                        format("Skipping asset %s: checksums are equal", path));
+                        String.format("Skipping asset %s: checksums are equal", path));
 
         }
 
@@ -253,13 +267,13 @@ public class Assets {
 
         for (String path : newItems) {
             File file = copy(path);
-            Log.i(TAG, format("Copying asset %s to %s", path, file));
+            Log.i(TAG, String.format("Copying asset %s to %s", path, file));
         }
 
         for (String path : unusedItems) {
             File file = new File(externalDir, path);
             file.delete();
-            Log.i(TAG, format("Removing asset %s", file));
+            Log.i(TAG, String.format("Removing asset %s", file));
         }
 
         updateItemList(items);
