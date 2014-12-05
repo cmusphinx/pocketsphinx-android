@@ -299,6 +299,9 @@ public class SpeechRecognizer {
             short[] buffer = new short[bufferSize];
             boolean inSpeech = decoder.getInSpeech();
 
+            // Skip the first buffer, usually zeroes
+  	    recorder.read(buffer, 0, buffer.length);
+
             while (!interrupted()
                     && ((timeoutSamples == NO_TIMEOUT) || (remainingSamples > 0))) {
                 int nread = recorder.read(buffer, 0, buffer.length);
