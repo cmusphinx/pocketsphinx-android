@@ -59,7 +59,7 @@ public class SpeechRecognizer {
     private Thread recognizerThread;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final Collection<RecognitionListener> listeners = new HashSet<RecognitionListener>();
-
+    
     protected SpeechRecognizer(Config config) {
         decoder = new Decoder(config);
     }
@@ -163,7 +163,17 @@ public class SpeechRecognizer {
 
         return result;
     }
-
+    
+    /**
+     * Returns the decoder object for advanced operation (dictionary extension, utterance
+     * data collection, adaptation and so on).
+     * 
+     * @return Decoder
+     */
+    public Decoder getDecoder() {
+        return decoder;
+    }
+    
     /**
      * Gets name of the currently active search.
      * 
@@ -300,7 +310,7 @@ public class SpeechRecognizer {
             boolean inSpeech = decoder.getInSpeech();
 
             // Skip the first buffer, usually zeroes
-  	    recorder.read(buffer, 0, buffer.length);
+            recorder.read(buffer, 0, buffer.length);
 
             while (!interrupted()
                     && ((timeoutSamples == NO_TIMEOUT) || (remainingSamples > 0))) {
