@@ -33,6 +33,7 @@ properties:
   * sdk.dir - path to Android SDK
   * ndk.dir - path to Android NDK
   * sdk.version - Android API version
+  * ndk.ext - extension for ndk-build script (empty on Linux, .cmd on Windows)
 
 For example:
 

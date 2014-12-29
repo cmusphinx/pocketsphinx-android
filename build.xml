@@ -7,6 +7,8 @@
   <property name="build.version" value="5prealpha"/>
   <property name="build.name" value="${ant.project.name}-${build.version}"/>
   <property name="build.njobs" value="1" />
+  <property name="swig.prefix" value="" />
+  <property name="ndk.ext" value="" />
 
   <target name="clean">
     <delete>
@@ -57,7 +59,7 @@
   </target>
 
   <target name="jni" depends="swig">
-    <exec executable="${ndk.dir}/ndk-build" failonerror="true">
+    <exec executable="${ndk.dir}/ndk-build${ndk.ext}" failonerror="true">
       <env key="NDK_LIBS_OUT" value="lib"/>
       <arg line="-j ${build.njobs}"/>
     </exec>
