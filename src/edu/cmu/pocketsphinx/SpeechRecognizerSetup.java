@@ -34,6 +34,7 @@ import static edu.cmu.pocketsphinx.Decoder.defaultConfig;
 import static edu.cmu.pocketsphinx.Decoder.fileConfig;
 
 import java.io.File;
+import java.io.IOException;
 
 /**
  * Wrapper for the decoder configuration to implement builder pattern.
@@ -69,7 +70,7 @@ public class SpeechRecognizerSetup {
         this.config = config;
     }
 
-    public SpeechRecognizer getRecognizer() {
+    public SpeechRecognizer getRecognizer() throws IOException {
         return new SpeechRecognizer(config);
     }
 

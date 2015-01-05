@@ -56,12 +56,39 @@ public class SpeechRecognizer {
     protected static final String TAG = SpeechRecognizer.class.getSimpleName();
 
     private final Decoder decoder;
+
+    private final int sampleRate;        
+    private final static float BUFFER_SIZE_SECONDS = 0.4f;
+    private int bufferSize;
+    private final AudioRecord recorder;
+    
     private Thread recognizerThread;
+
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    
     private final Collection<RecognitionListener> listeners = new HashSet<RecognitionListener>();
     
-    protected SpeechRecognizer(Config config) {
+    /**
+     * Creates speech recognizer. Recognizer holds the AudioRecord object, so you 
+     * need to call {@link release} in order to properly finalize it.
+     * 
+     * @param config The configuration object
+     * @throws IOException thrown if audio recorder can not be created for some reason.
+     */
+    protected SpeechRecognizer(Config config) throws IOException {
         decoder = new Decoder(config);
+        sampleRate = (int)decoder.getConfig().getFloat("-samprate");
+        bufferSize = Math.round(sampleRate * BUFFER_SIZE_SECONDS);
+        recorder = new AudioRecord(
+                AudioSource.VOICE_RECOGNITION, sampleRate,
+                AudioFormat.CHANNEL_IN_MONO,
+                AudioFormat.ENCODING_PCM_16BIT, bufferSize * 2);
+
+        if (recorder.getState() == AudioRecord.STATE_UNINITIALIZED) {
+            recorder.release();
+            throw new IOException(
+                    "Failed to initialize recorder. Microphone might be already in use.");
+        }
     }
 
     /**
@@ -175,6 +202,13 @@ public class SpeechRecognizer {
     }
     
     /**
+     * Shutdown the recognizer and release the recorder
+     */
+    public void shutdown() {
+        recorder.release();
+    }
+    
+    /**
      * Gets name of the currently active search.
      * 
      * @return active search name or null if no search was started
@@ -256,16 +290,11 @@ public class SpeechRecognizer {
 
     private final class RecognizerThread extends Thread {
         
-        private int sampleRate;
-        private int bufferSize;
         private int remainingSamples;
         private int timeoutSamples;
         private final static int NO_TIMEOUT = -1;
-        private final static float BUFFER_SIZE_SECONDS = 0.4f;
 
         public RecognizerThread(int timeout) {
-            this.sampleRate = (int)decoder.getConfig().getFloat("-samprate");
-            this.bufferSize = Math.round(sampleRate * BUFFER_SIZE_SECONDS);
             if (timeout != NO_TIMEOUT)
                 this.timeoutSamples = timeout * sampleRate / 1000;
             else
@@ -280,23 +309,9 @@ public class SpeechRecognizer {
         @Override
         public void run() {
 
-            AudioRecord recorder = new AudioRecord(
-                    AudioSource.VOICE_RECOGNITION, sampleRate,
-                    AudioFormat.CHANNEL_IN_MONO,
-                    AudioFormat.ENCODING_PCM_16BIT, bufferSize * 2);
-
-            if (recorder.getState() == AudioRecord.STATE_UNINITIALIZED) {
-                recorder.release();
-                IOException ioe = new IOException(
-                        "Failed to initialize recorder. Microphone might be already in use.");
-                mainHandler.post(new OnErrorEvent(ioe));
-                return;
-            }
-
             recorder.startRecording();
             if (recorder.getRecordingState() == AudioRecord.RECORDSTATE_STOPPED) {
                 recorder.stop();
-                recorder.release();
                 IOException ioe = new IOException(
                         "Failed to start recording. Microphone might be already in use.");
                 mainHandler.post(new OnErrorEvent(ioe));
@@ -345,7 +360,6 @@ public class SpeechRecognizer {
             }
 
             recorder.stop();
-            recorder.release();
             decoder.endUtt();
 
             // Remove all pending notifications.
