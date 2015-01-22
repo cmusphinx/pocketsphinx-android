@@ -320,7 +320,7 @@ public class SpeechRecognizer {
 
             Log.d(TAG, "Starting decoding");
 
-            decoder.startUtt(null);
+            decoder.startUtt();
             short[] buffer = new short[bufferSize];
             boolean inSpeech = decoder.getInSpeech();
 
