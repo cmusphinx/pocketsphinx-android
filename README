@@ -50,14 +50,14 @@ Using the library
 =================
 
 Library is distributed as architecture-independent
-pocketsphinx-android-0.8-nolib.jar and binary .so files for different
+pocketsphinx-android-5prealpha-nolib.jar and binary .so files for different
 hardware architectures. Due to a bug in ADT plugin it is currently
 impossible to include pocketsphinx-android as a single jar.
 
 You will have to use "-nolib" version of the library and add shared
 libraries manually. For example, if you are building application for ARM
 architecture on Eclipse, you will have to include
-"libs/pocketsphinx-android-0.8-nolib.jar" and
+"libs/pocketsphinx-android-5prealpha-nolib.jar" and
 "libs/armeabi/libpocketsphinx_jni.so" into your project. In Android
 Studio you need to place jar file in app/libs folder and jni .so files
 into app/src/main/jniLibs folder.
