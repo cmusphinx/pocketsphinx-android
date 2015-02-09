@@ -41,8 +41,7 @@ LOCAL_SRC_FILES := \
   pio.c \
   profile.c \
   sbthread.c \
-  strfuncs.c \
-  utf8.c
+  strfuncs.c
 
 include $(BUILD_STATIC_LIBRARY)
 
