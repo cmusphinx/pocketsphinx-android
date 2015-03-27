@@ -7,7 +7,7 @@ high-level interface for recognizing the microphone input.
 Build
 =====
 
-You will need SWIG, Apache Ant and Android NDK to build a distributable
+You will need SWIG, Gradle and Android NDK to build a distributable
 archive of pocketsphinx for Android.
 
 You need to checkout sphinxbase, pocketsphinx and pocketsphinx-android
@@ -27,12 +27,12 @@ svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx
 svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx-android
 
 After arragement of the files you need to update the file
-'build.properties' in the project root and define the following
+'gradle.properties' in the project root and define the following
 properties:
 
   * sdk.dir - path to Android SDK
   * ndk.dir - path to Android NDK
-  * sdk.version - Android API version
+  * sdk.vrsion - Android API version
   * ndk.ext - extension for ndk-build script (empty on Linux, .cmd on Windows)
 
 For example:
@@ -41,26 +41,20 @@ sdk.dir=/home/user/local/adt-bundle-linux-x86_64-20140321/sdk
 ndk.dir=/home/user/local/android-ndk-r9d
 sdk.version=19
 
-After everything is set, run `ant jar`. It will create two jar archieves
-- regular and "nolib" versions. The "nolib" version contains only
-compiled wrapper classes, while regular version also includes shared
-library.
+After everything is set, run `gradle build`. It will create
+pocketsphinx-android-5prealpha-nolib.jar in build/libs. It will also
+create .so files in libs folder
 
 Using the library
 =================
 
 Library is distributed as architecture-independent
 pocketsphinx-android-5prealpha-nolib.jar and binary .so files for different
-hardware architectures. Due to a bug in ADT plugin it is currently
-impossible to include pocketsphinx-android as a single jar.
+hardware architectures.
 
 You will have to use "-nolib" version of the library and add shared
-libraries manually. For example, if you are building application for ARM
-architecture on Eclipse, you will have to include
-"libs/pocketsphinx-android-5prealpha-nolib.jar" and
-"libs/armeabi/libpocketsphinx_jni.so" into your project. In Android
-Studio you need to place jar file in app/libs folder and jni .so files
-into app/src/main/jniLibs folder.
+libraries manually. In Android Studio you need to place jar file in
+app/libs folder and jni .so files into app/src/main/jniLibs folder.
 
 For further information on usage please see the wiki page:
 

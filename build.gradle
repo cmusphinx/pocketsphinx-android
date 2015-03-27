@@ -1,0 +1,54 @@
+apply plugin: 'java'
+
+dependencies {
+    compile files("${sdkDir}/platforms/android-${sdkVersion}/android.jar")
+}
+
+
+task ndkBuild(type: Exec) {
+    commandLine "${ndkDir}/ndk-build${ndkExt}"
+}
+ndkBuild.outputs.dir "libs"
+ndkBuild.outputs.dir "obj"
+
+task mkdir << {
+    new File('build/generated-src/java').mkdirs()
+}
+
+task swigSb(type: Exec) {
+    commandLine 'swig',
+	"-I../sphinxbase/include", "-I../sphinxbase/swig", 
+	"-java", "-package", "edu.cmu.pocketsphinx", 
+	"-outdir", "build/generated-src/java", "-o", "jni/sphinxbase_wrap.c",
+	"../sphinxbase/swig/sphinxbase.i"
+}
+
+task swigPs(type: Exec) {
+    commandLine 'swig',
+        "-I../sphinxbase/swig",
+        "-I../pocketsphinx/include",
+        "-I../pocketsphinx/swig",
+        "-java", "-package", "edu.cmu.pocketsphinx",
+        "-outdir",  "build/generated-src/java",
+        "-o", "jni/pocketsphinx_wrap.c",
+        "../pocketsphinx/swig/pocketsphinx.i"
+}
+
+compileJava.dependsOn mkdir
+compileJava.dependsOn swigSb
+compileJava.dependsOn swigPs
+compileJava.dependsOn ndkBuild
+ndkBuild.dependsOn swigSb
+ndkBuild.dependsOn swigPs
+
+sourceSets {
+    main {
+        java {
+            srcDir 'build/generated-src/java'
+        }
+    }
+}
+
+jar.version = '5prealpha-nolib'
+
+clean.dependsOn cleanNdkBuild
