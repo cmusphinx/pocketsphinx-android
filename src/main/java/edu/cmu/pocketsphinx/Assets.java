@@ -80,7 +80,7 @@ public class Assets {
     private final File externalDir;
 
     /**
-     * Creates new instance for asset syncronization
+     * Creates new instance for asset synchronization
      * 
      * @param context
      *            application context
@@ -158,7 +158,7 @@ public class Assets {
 
     /**
      * In case you want to create more smart sync implementation, this method
-     * returns the list of items which must be syncronized.
+     * returns the list of items which must be synchronized.
      */
     public Collection<String> getItemsToCopy(String path) throws IOException {
         Collection<String> items = new ArrayList<String>();
