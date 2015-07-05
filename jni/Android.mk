@@ -20,6 +20,7 @@ LOCAL_MODULE := sphinxutil
 
 LOCAL_SRC_FILES := \
   bio.c \
+  bitarr.c \
   bitvec.c \
   case.c \
   ckd_alloc.c \
@@ -40,6 +41,7 @@ LOCAL_SRC_FILES := \
   mmio.c \
   pio.c \
   profile.c \
+  priority_queue.c \
   sbthread.c \
   strfuncs.c
 
@@ -103,11 +105,12 @@ LOCAL_SRC_FILES := \
   jsgf.c \
   jsgf_parser.c \
   jsgf_scanner.c \
-  lm3g_model.c \
-  ngram_model_arpa.c \
-  ngram_model_dmp.c \
+  lm_trie.c \
+  lm_trie_quant.c \
+  ngram_model_trie.c \
   ngram_model_set.c \
-  ngram_model.c
+  ngram_model.c \
+  ngrams_raw.c
 
 include $(BUILD_STATIC_LIBRARY)
 
