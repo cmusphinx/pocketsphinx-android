@@ -34,7 +34,6 @@ LOCAL_SRC_FILES := \
   glist.c \
   hash_table.c \
   heap.c \
-  huff_code.c \
   listelem_alloc.c \
   logmath.c.arm \
   matrix.c \
