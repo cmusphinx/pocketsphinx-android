@@ -83,7 +83,7 @@ LOCAL_MODULE := sphinxfeat
 LOCAL_SRC_FILES := \
   agc.c \
   cmn.c \
-  cmn_prior.c \
+  cmn_live.c \
   feat.c \
   lda.c
 
