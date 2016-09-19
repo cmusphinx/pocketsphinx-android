@@ -26,20 +26,20 @@ svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/sphinxbase
 svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx
 svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx-android
 
-After arragement of the files you need to update the file
-'gradle.properties' in the project root and define the following
-properties:
+After checkout you need to update the file 'gradle.properties' in the
+project root and define the following properties:
 
-  * sdk.dir - path to Android SDK
-  * ndk.dir - path to Android NDK
-  * sdk.vrsion - Android API version
-  * ndk.ext - extension for ndk-build script (empty on Linux, .cmd on Windows)
+  * sdkDir - path to Android SDK
+  * ndkDir - path to Android NDK
+  * sdkVersion - Android API version
+  * ndkExt - extension for ndk-build script (empty on Linux, .cmd on Windows)
 
 For example:
 
-sdk.dir=/home/user/local/adt-bundle-linux-x86_64-20140321/sdk
-ndk.dir=/home/user/local/android-ndk-r9d
-sdk.version=19
+sdkDir=/home/user/local/adt-bundle-linux-x86_64-20140321/sdk
+ndkDir=/home/user/local/android-ndk-r9d
+sdkVersion=19
+ndkExt=
 
 After everything is set, run `gradle build`. It will create
 pocketsphinx-android-5prealpha-nolib.jar in build/libs. It will also
@@ -48,9 +48,9 @@ create .so files in libs folder
 Using the library
 =================
 
-Library is distributed as architecture-independent
-pocketsphinx-android-5prealpha-nolib.jar and binary .so files for different
-hardware architectures.
+Library is distributed as architecture-independent archive
+pocketsphinx-android-5prealpha-nolib.jar and binary .so files for
+different hardware architectures.
 
 You will have to use "-nolib" version of the library and add shared
 libraries manually. In Android Studio you need to place jar file in
