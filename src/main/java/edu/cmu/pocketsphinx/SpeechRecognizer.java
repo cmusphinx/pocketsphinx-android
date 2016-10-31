@@ -222,7 +222,7 @@ public class SpeechRecognizer {
     }
 
     /**
-     * Adds searches based on JSpeech grammar.
+     * Adds searches based on JSpeech grammar file.
      * 
      * @param name
      *            search name
@@ -232,6 +232,18 @@ public class SpeechRecognizer {
     public void addGrammarSearch(String name, File file) {
         Log.i(TAG, format("Load JSGF %s", file));
         decoder.setJsgfFile(name, file.getPath());
+    }
+
+    /**
+     * Adds searches based on JSpeech grammar string.
+     * 
+     * @param name
+     *            search name
+     * @param file
+     *            JSGF string
+     */
+    public void addGrammarSearch(String name, String jsgfString) {
+        decoder.setJsgfString(name, jsgfString);
     }
 
     /**
