@@ -8,7 +8,7 @@ Build
 =====
 
 You will need SWIG, Gradle and Android NDK to build a distributable
-archive of pocketsphinx for Android.
+archive of pocketsphinx for Android. It is better to use recent versions.
 
 You need to checkout sphinxbase, pocketsphinx and pocketsphinx-android
 and put them in the same folder.
@@ -26,37 +26,36 @@ svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/sphinxbase
 svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx
 svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx-android
 
-After checkout you need to update the file 'gradle.properties' in the
+After checkout you need to update the file 'local.properties' in the
 project root and define the following properties:
 
-  * sdkDir - path to Android SDK
-  * ndkDir - path to Android NDK
-  * sdkVersion - Android API version
-  * ndkExt - extension for ndk-build script (empty on Linux, .cmd on Windows)
+  * sdk.dir - path to Android SDK
+  * ndk.dir - path to Android NDK
 
 For example:
 
-sdkDir=/home/user/local/adt-bundle-linux-x86_64-20140321/sdk
-ndkDir=/home/user/local/android-ndk-r9d
-sdkVersion=19
-ndkExt=
+sdk.dir=/Users/User/Library/Android/sdk
+ndk.dir=/Users/User/Library/Android/sdk/ndk-bundle
 
 After everything is set, run `gradle build`. It will create
-pocketsphinx-android-5prealpha-nolib.jar in build/libs. It will also
-create .so files in libs folder
+pocketsphinx-android-release.jar and
+pocketsphinx-android-5prealpha-debug.aar in build/output.
 
 Using the library
 =================
 
-Library is distributed as architecture-independent archive
-pocketsphinx-android-5prealpha-nolib.jar and binary .so files for
-different hardware architectures.
+Library is distributed as android archive AAR. You can add it to your project
+as usual with Android Studio or directly in gradle
 
-You will have to use "-nolib" version of the library and add shared
-libraries manually. In Android Studio you need to place jar file in
-app/libs folder and jni .so files into app/src/main/jniLibs folder.
+    dependencies {
+	compile (name:'pocketsphinx-android-debug', ext:'aar')
+    }
+    repositories {
+	flatDir {
+    	    dirs 'libs'
+	}
+    }
 
 For further information on usage please see the wiki page:
 
 http://cmusphinx.sourceforge.net/wiki/tutorialandroid
-
