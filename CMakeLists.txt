@@ -109,7 +109,7 @@ add_library( pocketsphinx_jni SHARED
 	     ${SPHINXBASE_SOURCES_ABS} ${POCKETSPHINX_SOURCES_ABS}
 )
              
-include_directories(../sphinxbase/include ../sphinxbase/include/sphinxbase ../pocketsphinx/include)
+include_directories(../sphinxbase/include ../sphinxbase/include/android ../sphinxbase/include/sphinxbase ../pocketsphinx/include)
 
 add_definitions(-DHAVE_CONFIG_H)
 
