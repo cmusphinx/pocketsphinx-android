@@ -25,9 +25,9 @@ so you need to make sure you are using latest versions. You can use
 the following command to checkout from repository:
 
 ```
-svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/sphinxbase
-svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx
-svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx-android
+git clone https://github.com/cmusphinx/sphinxbase
+git clone https://github.com/cmusphinx/pocketsphinx
+git clone https://github.com/cmusphinx/pocketsphinx-android
 ```
 
 After checkout you need to update the file 'local.properties' in the
@@ -44,7 +44,7 @@ ndk.dir=/Users/User/Library/Android/sdk/ndk-bundle
 ```
 
 After everything is set, run `gradle build`. It will create
-pocketsphinx-android-release.jar and
+pocketsphinx-android-5prealpha-release.aar and
 pocketsphinx-android-5prealpha-debug.aar in build/output.
 
 Using the library
