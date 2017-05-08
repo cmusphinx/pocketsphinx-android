@@ -13,18 +13,22 @@ archive of pocketsphinx for Android. It is better to use recent versions.
 You need to checkout sphinxbase, pocketsphinx and pocketsphinx-android
 and put them in the same folder.
 
+```
 Root folder
  \_pocketsphinx
  \_sphinxbase
  \_pocketsphinx-android
+```
 
 Older versions might be incompatible with the latest pocketsphinx-android,
 so you need to make sure you are using latest versions. You can use
 the following command to checkout from repository:
 
+```
 svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/sphinxbase
 svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx
 svn checkout svn://svn.code.sf.net/p/cmusphinx/code/trunk/pocketsphinx-android
+```
 
 After checkout you need to update the file 'local.properties' in the
 project root and define the following properties:
@@ -34,8 +38,10 @@ project root and define the following properties:
 
 For example:
 
+```
 sdk.dir=/Users/User/Library/Android/sdk
 ndk.dir=/Users/User/Library/Android/sdk/ndk-bundle
+```
 
 After everything is set, run `gradle build`. It will create
 pocketsphinx-android-release.jar and
@@ -48,12 +54,13 @@ Library is distributed as android archive AAR. You can add it to your project
 as usual with Android Studio or directly in gradle
 
     dependencies {
-	compile (name:'pocketsphinx-android-debug', ext:'aar')
+        compile (name:'pocketsphinx-android-debug', ext:'aar')
     }
+    
     repositories {
-	flatDir {
-    	    dirs 'libs'
-	}
+        flatDir {
+                dirs 'libs'
+        }
     }
 
 For further information on usage please see the wiki page:
