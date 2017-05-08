@@ -39,9 +39,11 @@ android {
     }
 }
 
-task mkdir << {
-    new File('build/generated-src/java').mkdirs()
-    new File('build/generated-src/cpp').mkdirs()
+task mkdir {
+    doLast {
+        new File('build/generated-src/java').mkdirs()
+	new File('build/generated-src/cpp').mkdirs()
+    }
 }
 
 task swigSb(type: Exec) {

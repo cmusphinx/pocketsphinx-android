@@ -112,6 +112,7 @@ add_library( pocketsphinx_jni SHARED
 include_directories(../sphinxbase/include ../sphinxbase/include/android ../sphinxbase/include/sphinxbase ../pocketsphinx/include)
 
 add_definitions(-DHAVE_CONFIG_H)
+add_compile_options(-O3)
 
 target_link_libraries( pocketsphinx_jni
                        log )
