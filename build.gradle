@@ -46,22 +46,25 @@ task mkdir {
     }
 }
 
+def sphinxbase_home = "$System.env.SPINXBASE_HOME"
+def pocketsphinx_home = "$System.env.POCKETSPHINX_HOME"
+
 task swigSb(type: Exec) {
     commandLine 'swig',
-	"-I../sphinxbase/include", "-I../sphinxbase/swig", 
-	"-java", "-package", "edu.cmu.pocketsphinx", 
+	"-I$sphinxbase_home/include", "-I$sphinxbase_home/swig",
+	"-java", "-package", "edu.cmu.pocketsphinx",
 	"-outdir", "build/generated-src/java", "-o", "build/generated-src/cpp/sphinxbase_wrap.c",
-	"../sphinxbase/swig/sphinxbase.i"
+	"$sphinxbase_home/swig/sphinxbase.i"
 }
 
 task swigPs(type: Exec) {
     commandLine 'swig',
-        "-I../sphinxbase/swig",
-        "-I../pocketsphinx/include",
-        "-I../pocketsphinx/swig",
+        "-I$sphinxbase_home/swig",
+        "-I$pocketsphinx_home/include",
+        "-I$pocketsphinx_home/swig",
         "-java", "-package", "edu.cmu.pocketsphinx",
-	"-outdir", "build/generated-src/java", "-o", "build/generated-src/cpp/pocketsphinx_wrap.c",
-        "../pocketsphinx/swig/pocketsphinx.i"
+        "-outdir", "build/generated-src/java", "-o", "build/generated-src/cpp/pocketsphinx_wrap.c",
+        "$pocketsphinx_home/swig/pocketsphinx.i"
 }
 
 preBuild.dependsOn mkdir, swigSb, swigPs

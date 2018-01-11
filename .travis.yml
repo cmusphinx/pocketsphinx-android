@@ -1,0 +1,45 @@
+# https://github.com/mgerhardy/caveexpress/blob/master/.travis.yml
+# https://github.com/googlesamples/android-ndk/blob/ba6a5a46cf5c0d4b76e2d56a78f321e4668e6e26/.travis.yml
+# https://github.com/travis-ci/travis-ci/issues/8360
+# https://github.com/owncloud/android/blob/master/.travis.yml
+
+language: android
+
+jdk:
+  - oraclejdk8
+
+addons:
+  apt_packages:
+    - swig
+
+android:
+  components:
+    - tools
+    - platform-tools
+    - build-tools-25.0.2
+    - android-25
+
+before_install:
+  - cmake --version
+  - swig -version
+  - echo "y" | sdkmanager "cmake;3.6.4111459"
+  - curl -L http://dl.google.com/android/repository/android-ndk-r16b-linux-x86_64.zip -O
+  - unzip -oq android-ndk-r16b-linux-x86_64.zip && rm android-ndk-r16b-linux-x86_64.zip
+  - export ANDROID_NDK_HOME=`pwd`/android-ndk-r16b
+  - git clone https://github.com/cmusphinx/sphinxbase
+  - git clone https://github.com/cmusphinx/pocketsphinx
+  - export POCKETSPHINX_HOME=`pwd`/pocketsphinx
+  - export SPINXBASE_HOME=`pwd`/sphinxbase
+
+before_deploy:
+  - mv build/outputs/aar/pocketsphinx-android-5prealpha-release.aar  build/outputs/aar/pocketsphinx-android-5prealpha.aar
+
+deploy:
+  provider: bintray
+  file: descriptor.json
+  user: nshmyrev
+  # TODO ecrypt yours here:
+  key:
+    secure: MX/XIxovXXaiQbbtOnUaUS5NxyLmLGJ0ShBBpujJogUtuERs+GdRnymZx/Bprp5s18AozkpI1ekG3AA/rv/BEzoO61lB5xGF/Zvs3G4QB/WAsLiCZ/iBncSsMqS6/Q+uJYZXw1/JJj02rZ9F2ERpCvvbxPQm9zWlXkc/P8s/5DQ=
+  on:
+    all_branches: true
