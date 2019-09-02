@@ -1,21 +1,27 @@
 buildscript {
     repositories {
+        google()
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.3.1'
+        classpath 'com.android.tools.build:gradle:3.3.0'
     }
+}
+
+allprojects {
+  repositories {
+      google()
+      jcenter()
+  }
 }
 
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 25
-    buildToolsVersion "25.0.2"
-
+    compileSdkVersion 26
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 25
+        targetSdkVersion 26
         versionCode 5
         versionName "5prealpha"
         setProperty("archivesBaseName", "pocketsphinx-android-$versionName")
@@ -46,7 +52,7 @@ task mkdir {
     }
 }
 
-def sphinxbase_home = "$System.env.SPINXBASE_HOME"
+def sphinxbase_home = "$System.env.SPHINXBASE_HOME"
 def pocketsphinx_home = "$System.env.POCKETSPHINX_HOME"
 
 task swigSb(type: Exec) {
