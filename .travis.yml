@@ -29,7 +29,7 @@ before_install:
   - git clone https://github.com/cmusphinx/sphinxbase
   - git clone https://github.com/cmusphinx/pocketsphinx
   - export POCKETSPHINX_HOME=`pwd`/pocketsphinx
-  - export SPINXBASE_HOME=`pwd`/sphinxbase
+  - export SPHINXBASE_HOME=`pwd`/sphinxbase
 
 before_deploy:
   - mv build/outputs/aar/pocketsphinx-android-5prealpha-release.aar  build/outputs/aar/pocketsphinx-android-5prealpha.aar

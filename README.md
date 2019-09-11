@@ -29,7 +29,7 @@ git clone https://github.com/cmusphinx/sphinxbase
 git clone https://github.com/cmusphinx/pocketsphinx
 git clone https://github.com/cmusphinx/pocketsphinx-android
 export POCKETSPHINX_HOME=`pwd`/pocketsphinx
-export SPINXBASE_HOME=`pwd`/sphinxbase
+export SPHINXBASE_HOME=`pwd`/sphinxbase
 ```
 
 After checkout you need to update the file 'local.properties' in the
