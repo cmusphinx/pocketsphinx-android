@@ -28,8 +28,6 @@ the following command to checkout from repository:
 git clone https://github.com/cmusphinx/sphinxbase
 git clone https://github.com/cmusphinx/pocketsphinx
 git clone https://github.com/cmusphinx/pocketsphinx-android
-export POCKETSPHINX_HOME=`pwd`/pocketsphinx
-export SPHINXBASE_HOME=`pwd`/sphinxbase
 ```
 
 After checkout you need to update the file 'local.properties' in the
@@ -37,12 +35,16 @@ project root and define the following properties:
 
   * sdk.dir - path to Android SDK
   * ndk.dir - path to Android NDK
+  * pocketsphinx.dir - path to pocketsphinx folder
+  * sphinxbase.dir - path to sphinxbase folder
 
 For example:
 
 ```
 sdk.dir=/Users/User/Library/Android/sdk
 ndk.dir=/Users/User/Library/Android/sdk/ndk-bundle
+pocketsphinx.dir=/Users/user/pocketsphinx
+sphinxbase.dir=/Users/user/sphinxbase
 ```
 
 After everything is set, run `./gradlew build`. It will create
@@ -84,7 +86,7 @@ as usual with Android Studio or directly in gradle
 
     repositories {
         flatDir {
-                dirs 'libs'
+            dirs 'libs'
         }
     }
 

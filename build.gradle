@@ -1,10 +1,15 @@
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+def pocketsphinx_dir = properties.getProperty('pocketsphinx.dir')
+def sphinxbase_dir = properties.getProperty('sphinxbase.dir')
+
 buildscript {
     repositories {
         google()
         jcenter()
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.3.0'
+        classpath 'com.android.tools.build:gradle:3.5.3'
     }
 }
 
@@ -18,59 +23,60 @@ allprojects {
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 26
+    compileSdkVersion 29
     defaultConfig {
         minSdkVersion 14
-        targetSdkVersion 26
+        targetSdkVersion 29
         versionCode 5
         versionName "5prealpha"
         setProperty("archivesBaseName", "pocketsphinx-android-$versionName")
-	externalNativeBuild {
-	    cmake {
-	    }
-	}
+        externalNativeBuild {
+            cmake {
+                arguments "-DPOCKETSPHINX_DIR=$pocketsphinx_dir", "-DSPHINXBASE_DIR=$sphinxbase_dir"
+            }
+        }
         ndk {
-	    abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
-	}
+            abiFilters 'x86', 'x86_64', 'armeabi-v7a', 'arm64-v8a'
+        }
     }
     sourceSets {
          main {
-              java.srcDirs = ['src/main/java', 'build/generated-src']
+             java.srcDirs = ['src/main/java', 'build/generated-src']
          }
     }
     externalNativeBuild {
-	cmake {
-    	    path "CMakeLists.txt"
-	}
+        cmake {
+             path "CMakeLists.txt"
+        }
     }
 }
 
-task mkdir {
+
+task swig {
+    doFirst {
+        assert file("$sphinxbase_dir/include").exists()
+        assert file("$pocketsphinx_dir/include").exists()
+    }
     doLast {
-        new File('build/generated-src/java').mkdirs()
-	new File('build/generated-src/cpp').mkdirs()
+        mkdir 'build/generated-src/java'
+        mkdir 'build/generated-src/cpp'
+        exec {
+            commandLine 'swig',
+                "-I$sphinxbase_dir/include", "-I$sphinxbase_dir/swig",
+                "-java", "-package", "edu.cmu.pocketsphinx",
+                "-outdir", "build/generated-src/java", "-o", "build/generated-src/cpp/sphinxbase_wrap.c",
+                "$sphinxbase_dir/swig/sphinxbase.i"
+        }
+        exec {
+            commandLine 'swig',
+                "-I$sphinxbase_dir/swig",
+                "-I$pocketsphinx_dir/include",
+                "-I$pocketsphinx_dir/swig",
+                "-java", "-package", "edu.cmu.pocketsphinx",
+                "-outdir", "build/generated-src/java", "-o", "build/generated-src/cpp/pocketsphinx_wrap.c",
+                "$pocketsphinx_dir/swig/pocketsphinx.i"
+        }
     }
 }
 
-def sphinxbase_home = "$System.env.SPHINXBASE_HOME"
-def pocketsphinx_home = "$System.env.POCKETSPHINX_HOME"
-
-task swigSb(type: Exec) {
-    commandLine 'swig',
-	"-I$sphinxbase_home/include", "-I$sphinxbase_home/swig",
-	"-java", "-package", "edu.cmu.pocketsphinx",
-	"-outdir", "build/generated-src/java", "-o", "build/generated-src/cpp/sphinxbase_wrap.c",
-	"$sphinxbase_home/swig/sphinxbase.i"
-}
-
-task swigPs(type: Exec) {
-    commandLine 'swig',
-        "-I$sphinxbase_home/swig",
-        "-I$pocketsphinx_home/include",
-        "-I$pocketsphinx_home/swig",
-        "-java", "-package", "edu.cmu.pocketsphinx",
-        "-outdir", "build/generated-src/java", "-o", "build/generated-src/cpp/pocketsphinx_wrap.c",
-        "$pocketsphinx_home/swig/pocketsphinx.i"
-}
-
-preBuild.dependsOn mkdir, swigSb, swigPs
+preBuild.dependsOn swig

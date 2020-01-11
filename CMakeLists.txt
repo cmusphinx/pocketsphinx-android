@@ -2,8 +2,8 @@
 
 cmake_minimum_required(VERSION 3.4.1)
 
-set(SPHINXBASE_SRC $ENV{SPHINXBASE_HOME}/src/libsphinxbase)
-set(POCKETSPHINX_SRC $ENV{POCKETSPHINX_HOME}/src/libpocketsphinx)
+set(SPHINXBASE_SRC ${SPHINXBASE_DIR}/src/libsphinxbase)
+set(POCKETSPHINX_SRC ${POCKETSPHINX_DIR}/src/libpocketsphinx)
 
 set(SPHINXBASE_SOURCES
 fe/fe_interface.c
@@ -106,10 +106,10 @@ endforeach()
 add_library( pocketsphinx_jni SHARED
              build/generated-src/cpp/pocketsphinx_wrap.c
              build/generated-src/cpp/sphinxbase_wrap.c
-	     ${SPHINXBASE_SOURCES_ABS} ${POCKETSPHINX_SOURCES_ABS}
+             ${SPHINXBASE_SOURCES_ABS} ${POCKETSPHINX_SOURCES_ABS}
 )
 
-include_directories($ENV{SPHINXBASE_HOME}/include $ENV{SPHINXBASE_HOME}/include/android $ENV{SPHINXBASE_HOME}/include/sphinxbase $ENV{POCKETSPHINX_HOME}/include)
+include_directories(${SPHINXBASE_DIR}/include ${SPHINXBASE_DIR}/include/android ${SPHINXBASE_DIR}/include/sphinxbase ${POCKETSPHINX_DIR}/include)
 
 add_definitions(-DHAVE_CONFIG_H)
 add_compile_options(-O3)
